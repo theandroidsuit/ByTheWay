@@ -1,0 +1,128 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context="com.theandroidsuit.bytheway.AddPosition">
+
+
+
+    <Switch
+        android:id="@+id/itemEditStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"/>
+
+    <LinearLayout
+        android:id="@+id/layoutTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="5dp"
+        android:layout_below="@+id/itemEditStatus">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Title"
+            android:layout_marginRight="3dp"/>
+
+        <EditText
+            android:id="@+id/itemEditTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"/>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/layoutDesc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@+id/layoutTitle">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Extra"/>
+
+        <EditText
+            android:id="@+id/itemEditDescription"
+            android:maxLines="5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="12dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_above="@+id/layoutMap"
+        android:weightSum="10">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Address"
+            android:layout_weight="1"/>
+
+        <EditText
+            android:id="@+id/itemEditAddress"
+            android:text=""
+            android:maxLines="2"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="8"
+            android:textSize="12dp"/>
+
+        <ImageView
+            android:id="@+id/imageSearch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/search"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutMap"
+        android:layout_width="match_parent"
+        android:layout_height="270dp"
+        android:background="@drawable/map_shadow"
+        android:layout_above="@+id/itemEditSensitive" >
+        <fragment
+            android:id="@+id/mapPosition"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:name="com.google.android.gms.maps.SupportMapFragment"/>
+    </LinearLayout>
+
+    <SeekBar
+        android:id="@+id/itemEditSensitive"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"/>
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/itemEditStatus"
+        android:layout_alignRight="@+id/layoutTitle"
+        android:layout_alignEnd="@+id/layoutTitle">
+
+        <ImageView
+            android:id="@+id/imageEdit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/on"/>
+        <ImageView
+            android:id="@+id/imageDelete"
+            android:layout_marginLeft="5dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/delete"/>
+    </LinearLayout>
+</RelativeLayout>
