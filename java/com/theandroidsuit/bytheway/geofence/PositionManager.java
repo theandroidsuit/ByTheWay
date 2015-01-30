@@ -24,6 +24,9 @@ public class PositionManager {
     public static final String STATUS_DEACTIVATE = "off";
 
 
+    public static final String SENSIVILITY_FILL_COLOR = "#8881DAF5";
+    public static final String SENSIVILITY_BORDER_COLOR = "#81BEF7";
+
     /* GEOFENCES */
     private static List<Geofence> geofencesToActivate;
 

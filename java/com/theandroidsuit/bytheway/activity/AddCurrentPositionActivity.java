@@ -245,8 +245,8 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .center(latLng)
-                .fillColor(Color.parseColor("#8881DAF5"))
-                .strokeColor(Color.parseColor("#81BEF7"))
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(GeofenceManager.DEFAULT_RADIUS); // In meters
 

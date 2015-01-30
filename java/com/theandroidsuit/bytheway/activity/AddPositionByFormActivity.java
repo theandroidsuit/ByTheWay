@@ -49,6 +49,7 @@ import java.util.List;
 
 public class AddPositionByFormActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener, GoogleMap.OnMarkerDragListener{
 
+
     public final String TAG = this.getClass().getName();
 
     private DBHelper mDBHelper;
@@ -263,6 +264,8 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
             OpenHelperManager.releaseHelper();
             mDBHelper = null;
         }
+
+        //sensitivity.setOnSeekBarChangeListener(null);
     }
 
 
@@ -337,8 +340,8 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .center(latLng)
-                .fillColor(Color.parseColor("#8881DAF5"))
-                .strokeColor(Color.parseColor("#81BEF7"))
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(sensitInt); // In meters
 
@@ -416,8 +419,8 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .center(marker.getPosition())
-                .fillColor(Color.parseColor("#8881DAF5"))
-                .strokeColor(Color.parseColor("#81BEF7"))
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(sensitivity.getProgress()); // In meters
 

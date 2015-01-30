@@ -1,39 +1,36 @@
-package com.theandroidsuit.bytheway.activity;
+package com.theandroidsuit.bytheway.fragment;
 
+import android.app.Activity;
+import android.app.Fragment;
 import android.content.Intent;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.Toast;
+import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
 import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
-
 import com.theandroidsuit.bytheway.R;
+import com.theandroidsuit.bytheway.activity.DetailActivity;
 import com.theandroidsuit.bytheway.geofence.GeofenceManager;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
 import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
-import com.theandroidsuit.bytheway.util.BTWUtils;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,15 +39,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by Virginia Hernández on 14/01/15.
+ * Created by Virginia Hernández on 29/01/15.
  */
+public class GoogleMapFragment extends MapFragment implements LocationListener{
 
-public class MapsActivity extends ActionBarActivity implements LocationListener {
 
-    private static final String INITIALIZE_ACTIVITY_GEOFENCE_KEY = "initialize_activity_geofence_key";
-    public final String TAG = this.getClass().getName();
+    private static View view;
+    /**
+     * Note that this may be null if the Google Play services APK is not
+     * available.
+     */
 
-    private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private static GoogleMap mMap;
     private Map<String, Long> markerMap = null; // Map to store relation between marker and positionId
 
     private boolean firstTimePosition = true;
@@ -63,73 +63,49 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
     private Boolean changeGeofences = true;
     private Boolean initialize = false;
 
+
     private GeofenceManager geoManager;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG,"onCreate");
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+    }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-
-        if (savedInstanceState == null) {
-            // First incarnation of this activity.
-            mapFragment.setRetainInstance(true);
-        } else {
-            // Reincarnated activity. The obtained map is the same map instance in the previous
-            // activity life cycle. There is no need to reinitialize it.
-            mMap = mapFragment.getMap();
-        }
-
-
-        // Initialize map for relationship between: PositionEntry <--> Marker
         markerMap = new HashMap<>();
 
-        // Setup Map
-        setUpMapIfNeeded();
-
         // Setup Geofence System
-        geoManager = new GeofenceManager(this);
+        geoManager = new GeofenceManager(getActivity());
         geoManager.setupGeofenceSystem();
 
-        // Setting action to button ADD POSITION (+)
-        ImageView addPosition = (ImageView) findViewById(R.id.addPosition);
-        addPosition.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), AddCurrentPositionActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 
     @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
 
-        initialize = savedInstanceState.getBoolean(INITIALIZE_ACTIVITY_GEOFENCE_KEY);
+        setRetainInstance(true);
+        //view = super.onCreateView(inflater, container, savedInstanceState);
+        view = (RelativeLayout) inflater.inflate(R.layout.activity_maps, container, false);
+        // Initialize map for relationship between: PositionEntry <--> Marker
+
+        return view;
+
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        outState.putBoolean(INITIALIZE_ACTIVITY_GEOFENCE_KEY, initialize);
-    }
-
-    /******************** ACTIVITY LIVE CICLE **********************/
-    @Override
-    protected void onResume() {
-        Log.d(TAG,"onResume");
-
+    public void onResume() {
         super.onResume();
 
+    }
+
+    private void initializeMap(){
+        setUpMapIfNeeded(); // For setting up the MapFragment
 
         // Why here? Because, I need to update data after possible updatings
-        changeGeofences = getIntent().getBooleanExtra(GeofenceManager.INIT_GEOFENCE_KEY, false);
+        changeGeofences = getActivity().getIntent().getBooleanExtra(GeofenceManager.INIT_GEOFENCE_KEY, false);
 
         try {
             // Retrieve from database
@@ -141,10 +117,9 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
             e.printStackTrace();
         }
 
-        setUpMapIfNeeded();
-
         putPositionsAtMap();
         setInfoWindowListeners();
+
 
         if (!initialize && !changeGeofences ) {
 
@@ -156,14 +131,42 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
             initialize = true;
         }
 
-        String or = getIntent().getStringExtra(BTWUtils.OPERATION_RESULT);
-        if(null != or && !or.isEmpty()){
-            Toast.makeText(this, or, Toast.LENGTH_LONG).show();
+
+    }
+
+    private void setUpMapIfNeeded() {
+
+        // Do a null check to confirm that we have not already instantiated the map.
+        if (mMap == null) {
+            // Try to obtain the map from the SupportMapFragment.
+            mMap = getMap(); ///((GoogleMapFragment) getChildFragmentManager().findFragmentById(R.id.map)).getMap();
+
+            CameraUpdate zoom = CameraUpdateFactory.zoomTo(14);
+            mMap.animateCamera(zoom);
+
+            // Check if we were successful in obtaining the map.
+        }
+
+        if (mMap != null) {
+            setMyLocationOnMap();
         }
     }
 
+
+
     @Override
-    protected void onDestroy() {
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        initializeMap();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
+
+    @Override
+    public void onDetach() {
+
         // Unregister the broadcast receiver
         geoManager.releaseReceiver();
 
@@ -172,49 +175,19 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
             mDBHelper = null;
         }
 
-        super.onDestroy();
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //super.onCreateOptionsMenu(menu);
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in And	Intent intent;
-        Intent intent;
-        switch (item.getItemId()) {
-            case R.id.action_all_positions:
-                intent = new Intent(MapsActivity.this, ListPositionActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                break;
-            case R.id.action_add_position_by_form:
-                intent = new Intent(MapsActivity.this, AddPositionByFormActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                break;
-            case R.id.action_add_position_by_map:
-                intent = new Intent(MapsActivity.this, MapsFragmentActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent);
-                break;
-            default:
-                break;
-        }
-
-        return true;
+        super.onDetach();
 
     }
-
 
     /******************** SUPPORT METHODS **********************/
+
+    private DBHelper getHelper() {
+        if (mDBHelper == null) {
+            mDBHelper = OpenHelperManager.getHelper(getActivity(), DBHelper.class);
+        }
+        return mDBHelper;
+    }
+
     private void putPositionsAtMap() {
         // Set Positions at Map
         mMap.clear();
@@ -231,50 +204,10 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
         }
     }
 
-    private DBHelper getHelper() {
-        if (mDBHelper == null) {
-            mDBHelper = OpenHelperManager.getHelper(this, DBHelper.class);
-        }
-        return mDBHelper;
-    }
-
-    /**
-     * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
-     * installed) and the map has not already been instantiated.. This will ensure that we only ever
-     * call {@link #setMyLocationOnMap()}  once when {@link #mMap} is not null.
-     * <p/>
-     * If it isn't installed {@link SupportMapFragment} (and
-     * {@link com.google.android.gms.maps.MapView MapView}) will show a prompt for the user to
-     * install/update the Google Play services APK on their device.
-     * <p/>
-     * A user can return to this FragmentActivity after following the prompt and correctly
-     * installing/updating/enabling the Google Play services. Since the FragmentActivity may not
-     * have been completely destroyed during this process (it is likely that it would only be
-     * stopped or paused), {@link #onCreate(Bundle)} may not be called again so we should call this
-     * method in {@link #onResume()} to guarantee that it will be called.
-     */
-    private void setUpMapIfNeeded() {
-        Log.d(TAG, "setUpMapIfNeeded");
-
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mMap == null) {
-            // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map)).getMap();
-
-            CameraUpdate zoom = CameraUpdateFactory.zoomTo(14);
-            mMap.animateCamera(zoom);
-
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                setMyLocationOnMap();
-            }
-        }
-    }
-
 
     private void setMyLocationOnMap() {
         // Getting LocationManager object from System Service LOCATION_SERVICE
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        LocationManager locationManager = (LocationManager) getActivity().getSystemService(getActivity().LOCATION_SERVICE);
 
         // Creating a criteria object to retrieve provider
         Criteria criteria = new Criteria();
@@ -329,7 +262,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
             public void onInfoWindowClick(Marker marker) {
 
                 Long idPosition = markerMap.get(marker.getId());
-                Intent intent = new Intent(getApplicationContext(), DetailActivity.class);
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
 
                 // Passing data as a parecelable object to FallaInfoActivity
                 intent.putExtra(PositionManager.ID_POSITION_KEY, idPosition);
@@ -379,5 +312,6 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
     public void onProviderDisabled(String provider) {
 
     }
+
 
 }

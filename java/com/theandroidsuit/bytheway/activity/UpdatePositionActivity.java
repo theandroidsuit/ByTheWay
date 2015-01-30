@@ -346,8 +346,8 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .center(latLng)
-                .fillColor(Color.parseColor("#8881DAF5"))
-                .strokeColor(Color.parseColor("#81BEF7"))
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(posOriginal.getSensitive()); // In meters
 
@@ -413,8 +413,8 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         // Instantiates a new CircleOptions object and defines the center and radius
         CircleOptions circleOptions = new CircleOptions()
                 .center(marker.getPosition())
-                .fillColor(Color.parseColor("#8881DAF5"))
-                .strokeColor(Color.parseColor("#81BEF7"))
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(sensitivity.getProgress()); // In meters
 

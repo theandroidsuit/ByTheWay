@@ -18,11 +18,4 @@ public class BTWUtils {
     public static final String MAP_POSITION_ACTIVITY = "map";
     public static final String UPDATE_POSITION_ACTIVITY = "update_position";
 
-
-    public static final int OR_OK = 0;
-    public static final int OR_1 = 1;
-    public static final int OR_2 = 2;
-    public static final int OR_3 = 3;
-    public static final int OR_4 = 4;
-    public static final int OR_5 = 5;
 }

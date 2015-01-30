@@ -75,6 +75,12 @@
             android:label="@string/title_activity_update_position" >
         </activity>
 
+
+        <activity
+            android:name=".activity.MapsFragmentActivity"
+            android:label="@string/title_activity_choose_position_by_map" >
+        </activity>
+
         <!-- Geofencing Transition Service -->
         <service
             android:name=".service.ReceiveTransitionsIntentService"

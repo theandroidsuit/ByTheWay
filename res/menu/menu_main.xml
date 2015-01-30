@@ -6,11 +6,11 @@
         android:orderInCategory="100"
         android:title="@string/action_all_positions"
         app:showAsAction="ifRoom"/>
-   <!-- <item
+    <item
         android:id="@+id/action_add_position_by_map"
         android:orderInCategory="100"
         android:title="@string/action_add_position_by_map"
-        app:showAsAction="never"/> -->
+        app:showAsAction="never"/>
     <item
         android:id="@+id/action_add_position_by_form"
         android:orderInCategory="100"
