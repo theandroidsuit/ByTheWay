@@ -79,9 +79,10 @@ public class GeofenceRemover implements GoogleApiClient.ConnectionCallbacks,
         Log.d(TAG,"onConnected");
 
         if (!mGoogleApiClient.isConnected()) {
-            Toast.makeText(mContext, mContext.getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(mContext, mContext.getString(R.string.not_connected), Toast.LENGTH_SHORT).show();
             return;
         }
+
         try {
             if (null != geofencesToRemove && !geofencesToRemove.isEmpty()) {
                 // Remove geofences.

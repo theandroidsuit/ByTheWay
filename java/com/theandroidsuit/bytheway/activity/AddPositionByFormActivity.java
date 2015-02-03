@@ -55,10 +55,11 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
     private DBHelper mDBHelper;
 
     private GoogleMap mMap;
-    private Circle circleSensitivity;
     private SeekBar sensitivity;
     private boolean checked = false;
-    private Marker marker;
+
+    private static Circle circleSensitivity;
+    private static Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,12 +71,10 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
 
 
         setUpMapIfNeeded();
+        setupListeners();
 
-
-        // Setting the listener
-        sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
-        sensitivity.setOnSeekBarChangeListener(this);
-        sensitivity.setProgress(40);
+        if (null == savedInstanceState) // Solo la primera vez
+            putStuffOnView();
 
         ImageView add = (ImageView) findViewById(R.id.imageEdit);
         add.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +111,18 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
                 searchAddress();
             }
         });
+    }
+
+    private void putStuffOnView() {
+        // Use this method to put some stuff into view, only first time
+        sensitivity.setProgress(40);
+    }
+
+    private void setupListeners() {
+        // Setting the listener
+        mMap.setOnMarkerDragListener(this);
+        sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
+        sensitivity.setOnSeekBarChangeListener(this);
     }
 
     private void searchAddress(){
@@ -279,17 +290,14 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
 
             CameraUpdate zoom = CameraUpdateFactory.zoomTo(14);
             mMap.animateCamera(zoom);
-
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                try {
-                    mMap.setOnMarkerDragListener(this);
-                    addMarkerOnMap(null, null);
-                }catch (BTWOperationError e){
-
-                }
-            }
         }
+        // Check if we were successful in obtaining the map.
+        if (mMap != null) {
+            try {
+                addMarkerOnMap(null, null);
+            }catch (BTWOperationError e){  }
+        }
+
     }
 
 
@@ -413,18 +421,33 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
     }
 
     @Override
-    public void onMarkerDragEnd(Marker marker) {
-
-
+    public void onMarkerDragEnd(Marker newMarker) {
         // Instantiates a new CircleOptions object and defines the center and radius
+
+        marker.remove();
+
+        // Creating a marker
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        // Setting the position for the marker
+        markerOptions.position(newMarker.getPosition());
+
+        // Setting the marker Icon
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.draggable(true);
+
+        // Placing a marker on the touched position
+        marker = mMap.addMarker(markerOptions);
+
         CircleOptions circleOptions = new CircleOptions()
-                .center(marker.getPosition())
+                .center(newMarker.getPosition())
                 .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
                 .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(sensitivity.getProgress()); // In meters
 
         // Get back the mutable Circle
+        circleSensitivity.remove();
         circleSensitivity = mMap.addCircle(circleOptions);
     }
 }

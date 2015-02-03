@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.PersistableBundle;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,14 +46,17 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
     private static final String ID_TO_UPDATE_KEY = "idToUpdate";
 
-    // Objects to saveStatus
     private PositionEntity posOriginal = null;
-    private Long idToUpdate = null;
-    private GoogleMap mMap;
-    private Circle circleSensitivity;
-    private SeekBar sensitivity;
+
     private DBHelper mDBHelper;
-    private Marker marker;
+    private Long idToUpdate = null;
+
+    private GoogleMap mMap;
+    private SeekBar sensitivity;
+
+
+    private static Circle circleSensitivity;
+    private static Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,25 +68,26 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
             final String startingFlow = getIntent().getStringExtra(BTWUtils.STARTING_FLOW) == null ?
                     BTWUtils.LIST_POSITION_ACTIVITY : getIntent().getStringExtra(BTWUtils.STARTING_FLOW);
 
+
             // Restore Values
             if (null == idToUpdate)
                 idToUpdate = getIntent().getExtras().getLong(PositionManager.ID_POSITION_KEY);
 
+            // Actions for consolidate changes
+            Dao dao = getHelper().getPositionDao();
+            final PositionEntity oldValuePos = (PositionEntity) dao.queryForId(idToUpdate);
+
             // Get Original object
             if (null == posOriginal) {
-                Dao dao = getHelper().getPositionDao();
-                posOriginal = (PositionEntity) dao.queryForId(idToUpdate);
+                posOriginal = oldValuePos;
             }
 
+
             setUpMapIfNeeded();
-            // Setting the listener
-            sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
-            sensitivity.setOnSeekBarChangeListener(this);
-            sensitivity.setProgress(40);
+            setupListeners();
 
-
-            // Actions for consolidate changes
-            final PositionEntity oldValuePos = posOriginal;
+            if (null == savedInstanceState) // Solo la primera vez
+                putStuffOnMap();
 
             ImageView edit = (ImageView) findViewById(R.id.imageEdit);
             edit.setOnClickListener(new View.OnClickListener() {
@@ -101,10 +106,6 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
                     }
 
                     intent.putExtra(PositionManager.ID_POSITION_KEY, posOriginal.getId());
-
-                    // No pasamos el iniciador xq volvemos al principio.
-                    // intent.putExtra(BTWUtils.STARTING_FLOW,startingFlow);
-
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                     startActivity(intent);
@@ -202,6 +203,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         }
     }
 
+
     private PositionEntity getPositionValuesFromView() {
 
         // Getting references from view
@@ -244,7 +246,6 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         EditText description = (EditText) findViewById(R.id.itemEditDescription);
         Switch status = (Switch) findViewById(R.id.itemEditStatus);
 
-
         // Setting values from database object
 
         // Title
@@ -285,36 +286,57 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
         // Setting view values
         setViewValuesFromPosition(posOriginal);
-
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putParcelable(PositionManager.POSITION_KEY, posOriginal);
+        PositionEntity pos = getPositionValuesFromView();
+
+        outState.putParcelable(PositionManager.POSITION_KEY, pos);
         outState.putLong(ID_TO_UPDATE_KEY,idToUpdate);
 
+        //outState.putParcelable("ll", circleSensitivity);
     }
 
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        posOriginal = savedInstanceState.getParcelable(PositionManager.POSITION_KEY);
+    }
 
     private void setUpMapIfNeeded() {
         Log.d(TAG, "setUpMapIfNeeded");
 
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapPosition);
+
+        mapFragment.setRetainInstance(true);
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapPosition)).getMap();
+            mMap = mapFragment.getMap();
 
             CameraUpdate zoom = CameraUpdateFactory.zoomTo(14);
             mMap.animateCamera(zoom);
 
-            // Check if we were successful in obtaining the map.
-            if (mMap != null) {
-                mMap.setOnMarkerDragListener(this);
-                addMarkerOnMap();
-            }
         }
+    }
+
+    private void putStuffOnMap() {
+        // Check if we were successful in obtaining the map.
+        if (mMap != null) {
+            addMarkerOnMap();
+        }
+    }
+
+    private void setupListeners() {
+        // Setting the listener
+        mMap.setOnMarkerDragListener(this);
+        sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
+        sensitivity.setOnSeekBarChangeListener(this);
     }
 
     private void addMarkerOnMap() {
@@ -403,22 +425,40 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
     @Override
     public void onMarkerDrag(Marker marker) {
-
     }
 
     @Override
-    public void onMarkerDragEnd(Marker marker) {
-
-
+    public void onMarkerDragEnd(Marker newMarker) {
         // Instantiates a new CircleOptions object and defines the center and radius
+
+        marker.remove();
+
+        // Creating a marker
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        // Setting the position for the marker
+        markerOptions.position(newMarker.getPosition());
+
+        // Setting the title for the marker.
+        // This will be displayed on taping the marker
+        markerOptions.title(posOriginal.getTitle());
+
+        // Setting the marker Icon
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.draggable(true);
+
+        // Placing a marker on the touched position
+        marker = mMap.addMarker(markerOptions);
+
         CircleOptions circleOptions = new CircleOptions()
-                .center(marker.getPosition())
+                .center(newMarker.getPosition())
                 .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
                 .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
                 .radius(sensitivity.getProgress()); // In meters
 
         // Get back the mutable Circle
+        circleSensitivity.remove();
         circleSensitivity = mMap.addCircle(circleOptions);
     }
 }

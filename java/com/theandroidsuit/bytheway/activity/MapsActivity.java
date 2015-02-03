@@ -200,11 +200,11 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 break;
-            case R.id.action_add_position_by_map:
+            /*case R.id.action_add_position_by_map:
                 intent = new Intent(MapsActivity.this, MapsFragmentActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
-                break;
+                break; */
             default:
                 break;
         }
