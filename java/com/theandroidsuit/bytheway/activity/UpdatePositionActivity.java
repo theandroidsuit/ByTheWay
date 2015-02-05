@@ -4,14 +4,12 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.PersistableBundle;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
@@ -46,14 +44,13 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
     private static final String ID_TO_UPDATE_KEY = "idToUpdate";
 
-    private PositionEntity posOriginal = null;
+    private PositionEntity posEdited = null;
 
     private DBHelper mDBHelper;
     private Long idToUpdate = null;
 
     private GoogleMap mMap;
     private SeekBar sensitivity;
-
 
     private static Circle circleSensitivity;
     private static Marker marker;
@@ -78,8 +75,8 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
             final PositionEntity oldValuePos = (PositionEntity) dao.queryForId(idToUpdate);
 
             // Get Original object
-            if (null == posOriginal) {
-                posOriginal = oldValuePos;
+            if (null == posEdited) {
+                posEdited = oldValuePos;
             }
 
 
@@ -105,7 +102,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
                         intent = new Intent(getApplicationContext(), DetailActivity.class);
                     }
 
-                    intent.putExtra(PositionManager.ID_POSITION_KEY, posOriginal.getId());
+                    intent.putExtra(PositionManager.ID_POSITION_KEY, posEdited.getId());
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
                     startActivity(intent);
@@ -285,7 +282,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         super.onResume();
 
         // Setting view values
-        setViewValuesFromPosition(posOriginal);
+        setViewValuesFromPosition(posEdited);
     }
 
     @Override
@@ -304,7 +301,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        posOriginal = savedInstanceState.getParcelable(PositionManager.POSITION_KEY);
+        posEdited = savedInstanceState.getParcelable(PositionManager.POSITION_KEY);
     }
 
     private void setUpMapIfNeeded() {
@@ -344,13 +341,13 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         MarkerOptions markerOptions = new MarkerOptions();
 
         // Setting the position for the marker
-        LatLng latLng = new LatLng(posOriginal.getLatitude(),posOriginal.getLongitude());
+        LatLng latLng = new LatLng(posEdited.getLatitude(), posEdited.getLongitude());
 
         markerOptions.position(latLng);
 
         // Setting the title for the marker.
         // This will be displayed on taping the marker
-        markerOptions.title(posOriginal.getTitle());
+        markerOptions.title(posEdited.getTitle());
 
         // Setting the marker Icon
         markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
@@ -371,7 +368,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
                 .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
                 .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
-                .radius(posOriginal.getSensitive()); // In meters
+                .radius(posEdited.getSensitive()); // In meters
 
         // Get back the mutable Circle
         circleSensitivity = mMap.addCircle(circleOptions);
@@ -441,7 +438,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
         // Setting the title for the marker.
         // This will be displayed on taping the marker
-        markerOptions.title(posOriginal.getTitle());
+        markerOptions.title(posEdited.getTitle());
 
         // Setting the marker Icon
         markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));

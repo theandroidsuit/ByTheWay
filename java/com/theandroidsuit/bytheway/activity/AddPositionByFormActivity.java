@@ -56,7 +56,6 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
 
     private GoogleMap mMap;
     private SeekBar sensitivity;
-    private boolean checked = false;
 
     private static Circle circleSensitivity;
     private static Marker marker;
@@ -115,6 +114,13 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
 
     private void putStuffOnView() {
         // Use this method to put some stuff into view, only first time
+        // Check if we were successful in obtaining the map.
+        if (mMap != null) {
+            try {
+                addMarkerOnMap(null, null);
+            }catch (BTWOperationError e){  }
+        }
+
         sensitivity.setProgress(40);
     }
 
@@ -129,14 +135,17 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
         EditText locationDesc = (EditText) findViewById(R.id.itemEditAddress);
         String addressStr = locationDesc.getText().toString();
         if(null == addressStr || addressStr.isEmpty()){
-            Toast.makeText(getApplicationContext(),"Intro new Address",Toast.LENGTH_LONG).show();
+            // Toast for invalid data
+            Toast.makeText(getApplicationContext(), R.string.invalid_address, Toast.LENGTH_LONG).show();
             return;
         }
 
         try {
             Address address = getlocationByAddressString(addressStr);
-            addMarkerOnMap(address, Integer.valueOf(sensitivity.getProgress()));
-            checked = true;
+            if (null != address) {
+                addMarkerOnMap(address, Integer.valueOf(sensitivity.getProgress()));
+            }
+
         }catch (IOException e){
 
         }catch (BTWOperationError bto){
@@ -213,10 +222,13 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
             } else { //Dudo de este else, debería eliminarlo
                 Address location = getlocationByAddressString(addressStr);
 
-                double longitude = location.getLongitude();
-                double latitude = location.getLatitude();
-                pos.setLatitude(latitude);
-                pos.setLongitude(longitude);
+                if (null != location) {
+                    double longitude = location.getLongitude();
+                    double latitude = location.getLatitude();
+                    pos.setLatitude(latitude);
+                    pos.setLongitude(longitude);
+                }
+
             }
 
         }catch (IOException e){
@@ -249,6 +261,7 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
         Geocoder coder = new Geocoder(this);
         List<Address> address = coder.getFromLocationName(addressStr, 5);
         if (address == null) {
+            Toast.makeText(getApplicationContext(), R.string.invalid_address, Toast.LENGTH_LONG).show();
             return null;
         }
         return address.get(0);
@@ -283,21 +296,19 @@ public class AddPositionByFormActivity extends ActionBarActivity implements Seek
     private void setUpMapIfNeeded() {
         Log.d(TAG, "setUpMapIfNeeded");
 
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.mapPosition);
+
+        mapFragment.setRetainInstance(true);
+
         // Do a null check to confirm that we have not already instantiated the map.
         if (mMap == null) {
             // Try to obtain the map from the SupportMapFragment.
-            mMap = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapPosition)).getMap();
+            mMap = mapFragment.getMap();
 
             CameraUpdate zoom = CameraUpdateFactory.zoomTo(14);
             mMap.animateCamera(zoom);
         }
-        // Check if we were successful in obtaining the map.
-        if (mMap != null) {
-            try {
-                addMarkerOnMap(null, null);
-            }catch (BTWOperationError e){  }
-        }
-
     }
 
 

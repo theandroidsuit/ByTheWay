@@ -3,39 +3,34 @@ package com.theandroidsuit.bytheway.sql.utils;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 import com.theandroidsuit.bytheway.sql.bo.BTWEntity;
-import com.theandroidsuit.bytheway.sql.bo.PositionEntity;
+import com.theandroidsuit.bytheway.sql.bo.CategoryEntity;
 
-import java.sql.SQLException;
 import java.util.ArrayList;
 
 /**
  * Created by Virginia Hernández on 13/01/15.
  */
-public class PositionDS extends BTWDS{
+public class CategoryDS extends BTWDS{
 
 
 
     private String[] allColumns = {
             BTWSQLiteHelper.COLUMN_ID,
-            BTWSQLiteHelper.COLUMN_LATITUDE,
-            BTWSQLiteHelper.COLUMN_LONGITUDE,
-            BTWSQLiteHelper.COLUMN_SENSITIVE,
             BTWSQLiteHelper.COLUMN_TITLE,
-            BTWSQLiteHelper.COLUMN_DESCRIPTION,
             BTWSQLiteHelper.COLUMN_STATUS};
 
 
 
     /* Constructor */
-    public PositionDS(Context context) {
+    public CategoryDS(Context context) {
         super(context);
     }
 
+    @Override
     public String getTableName(){
-        return BTWSQLiteHelper.TABLE_POSITION;
+        return BTWSQLiteHelper.TABLE_CATEGORY;
     }
 
     @Override
@@ -43,20 +38,22 @@ public class PositionDS extends BTWDS{
         return allColumns;
     }
 
+
     /* Create */
     public BTWEntity createEntity(BTWEntity pos) {
 
         ContentValues values = getContentValues(pos);
 
-        long insertId = database.insert(getTableName(), null, values);
+        long insertId = database.insert(
+                getTableName(),
+                null,
+                values);
 
         Cursor cursor = database.query(
                 getTableName(),
                 getAllColumns(),
                 BTWSQLiteHelper.COLUMN_ID + " = " + insertId,
                 null, null, null, null);
-
-
 
         cursor.moveToFirst();
         BTWEntity newEntity = cursorToEntity(cursor);
@@ -66,11 +63,11 @@ public class PositionDS extends BTWDS{
     }
 
     /* Getter One */
-    public BTWEntity getEntityById(long idPosition) {
+    public BTWEntity getEntityById(long idEntity) {
         Cursor cursor = database.query(
                 getTableName(),
                 getAllColumns(),
-                BTWSQLiteHelper.COLUMN_ID + " = " + idPosition,
+                BTWSQLiteHelper.COLUMN_ID + " = " + idEntity,
                 null, null, null, null);
 
         cursor.moveToFirst();
@@ -109,8 +106,7 @@ public class PositionDS extends BTWDS{
 
         database.delete(
                 getTableName(),
-                BTWSQLiteHelper.COLUMN_ID + " = " + id,
-                null);
+                BTWSQLiteHelper.COLUMN_ID + " = " + id, null);
     }
 
     /* Update */
@@ -120,7 +116,8 @@ public class PositionDS extends BTWDS{
 
         String whereClause =  BTWSQLiteHelper.COLUMN_ID + " = ?";
 
-        database.update(getTableName(),
+        database.update(
+                getTableName(),
                 values,
                 whereClause,
                 new String[] {String.valueOf(entity.getId())});
@@ -139,11 +136,10 @@ public class PositionDS extends BTWDS{
     }
 
 
-
     /* Getter by status */
-    public ArrayList<PositionEntity> getAllPositionsByStatus(String status) {
+    public ArrayList<CategoryEntity> getAllCategoryByStatus(String status) {
 
-        ArrayList<PositionEntity> positions = new ArrayList<PositionEntity>();
+        ArrayList<CategoryEntity> categories = new ArrayList<CategoryEntity>();
 
         String whereClause = BTWSQLiteHelper.COLUMN_STATUS + " = ? ";
         Cursor cursor = database.query(
@@ -155,29 +151,25 @@ public class PositionDS extends BTWDS{
 
         cursor.moveToFirst();
         while (!cursor.isAfterLast()) {
-            PositionEntity position = (PositionEntity) cursorToEntity(cursor);
-            positions.add(position);
+            CategoryEntity category = (CategoryEntity) cursorToEntity(cursor);
+            categories.add(category);
             cursor.moveToNext();
         }
         // make sure to close the cursor
         cursor.close();
 
-        return positions;
+        return categories;
     }
 
 
     @Override
     public ContentValues getContentValues(BTWEntity entity) {
 
-        PositionEntity pos = (PositionEntity) entity;
+        CategoryEntity cat = (CategoryEntity) entity;
 
         ContentValues values = new ContentValues();
-        values.put(BTWSQLiteHelper.COLUMN_LATITUDE, pos.getLatitude());
-        values.put(BTWSQLiteHelper.COLUMN_LONGITUDE, pos.getLongitude());
-        values.put(BTWSQLiteHelper.COLUMN_SENSITIVE, pos.getSensitive());
-        values.put(BTWSQLiteHelper.COLUMN_TITLE, pos.getTitle());
-        values.put(BTWSQLiteHelper.COLUMN_DESCRIPTION, pos.getDescription());
-        values.put(BTWSQLiteHelper.COLUMN_STATUS, pos.getStatus());
+        values.put(BTWSQLiteHelper.COLUMN_TITLE, cat.getTitle());
+        values.put(BTWSQLiteHelper.COLUMN_STATUS, cat.getStatus());
         return values;
     }
 
@@ -185,15 +177,11 @@ public class PositionDS extends BTWDS{
     public BTWEntity cursorToEntity(Cursor cursor) {
 
         if( cursor != null) {
-            PositionEntity pos = new PositionEntity();
+            CategoryEntity pos = new CategoryEntity();
 
             pos.setId(cursor.getLong(0));
-            pos.setLatitude(cursor.getDouble(1));
-            pos.setLongitude(cursor.getDouble(2));
-            pos.setSensitive(cursor.getLong(3));
-            pos.setTitle(cursor.getString(4));
-            pos.setDescription(cursor.getString(5));
-            pos.setStatus(cursor.getString(6));
+            pos.setTitle(cursor.getString(1));
+            pos.setStatus(cursor.getString(2));
 
             return pos;
         }

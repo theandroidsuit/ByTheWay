@@ -69,6 +69,7 @@ public class ChoosePositionByMapActivity extends FragmentActivity implements Loc
                     intent.putExtra(PositionManager.LOCATION_SELECTED_KEY, location);
                     startActivity(intent);
                 }else{
+                    // Toast for invalid data
                     Toast.makeText(getApplicationContext(), R.string.invalid_location, Toast.LENGTH_LONG).show();
                 }
             }

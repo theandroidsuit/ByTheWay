@@ -46,7 +46,7 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
         // The Intent contained an invalid action
         } else {
             Log.e(TAG, context.getString(R.string.invalid_action_detail, action));
-            Toast.makeText(context, R.string.invalid_action, Toast.LENGTH_LONG).show();
+            //Toast.makeText(context, R.string.invalid_action, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -85,6 +85,6 @@ public class GeofenceBroadcastReceiver extends BroadcastReceiver {
 
         String msg = intent.getStringExtra(GeofenceUtils.EXTRA_GEOFENCE_STATUS);
         Log.e(TAG, msg);
-        Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
+        //Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
     }
 }

@@ -125,10 +125,8 @@ public class GeofenceRegister implements    GoogleApiClient.ConnectionCallbacks,
 
             // Update the UI. Adding geofences enables the Remove Geofences button, and removing
             // geofences enables the Add Geofences button.
-            Toast.makeText(mContext,
-                    mContext.getString(R.string.add_geofences_result_success),
-                    Toast.LENGTH_SHORT
-            ).show();
+            Log.i(TAG,mContext.getString(R.string.add_geofences_result_success));
+            //Toast.makeText(mContext, mContext.getString(R.string.add_geofences_result_success), Toast.LENGTH_SHORT).show();
 
         } else if (status.hasResolution()) {
             // Google provides a way to fix the issue

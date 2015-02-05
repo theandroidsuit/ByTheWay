@@ -43,8 +43,6 @@ public class GeofenceRemover implements GoogleApiClient.ConnectionCallbacks,
     private Context mContext;
     protected GoogleApiClient mGoogleApiClient; // Provides the entry point to Google Play services.
     protected List<Geofence> geofencesToRemove;
-    private PendingIntent mGeofencePendingIntent; // Used when requesting to add or remove geofences.
-
 
 
     public GeofenceRemover (Context ctx){
@@ -100,8 +98,8 @@ public class GeofenceRemover implements GoogleApiClient.ConnectionCallbacks,
     }
 
     private void logSecurityException(SecurityException securityException) {
-        Log.e(TAG, "Invalid location permission. " +
-                "You need to use ACCESS_FINE_LOCATION with geofences", securityException);
+        Log.e(TAG, mContext.getString(R.string.permission_error), securityException);
+        Toast.makeText(mContext, R.string.permission_error, Toast.LENGTH_LONG).show();
     }
 
     public PendingIntent getRequestPendingIntent() {
@@ -163,10 +161,8 @@ public class GeofenceRemover implements GoogleApiClient.ConnectionCallbacks,
 
             // Update the UI. Adding geofences enables the Remove Geofences button, and removing
             // geofences enables the Add Geofences button.
-            Toast.makeText(mContext,
-                    mContext.getString(R.string.remove_geofences_intent_success),
-                    Toast.LENGTH_SHORT
-            ).show();
+            Log.i(TAG,mContext.getString(R.string.remove_geofences_intent_success));
+            // Toast.makeText(mContext, mContext.getString(R.string.remove_geofences_intent_success), Toast.LENGTH_SHORT).show();
 
         } else {
 
@@ -187,10 +183,6 @@ public class GeofenceRemover implements GoogleApiClient.ConnectionCallbacks,
     private PendingIntent getGeofencePendingIntent() {
         Log.d(TAG,"getGeofencePendingIntent");
 
-        // Reuse the PendingIntent if we already have it.
-        if (mGeofencePendingIntent != null) {
-            return mGeofencePendingIntent;
-        }
         Intent intent = new Intent(mContext, GeofenceBroadcastReceiver.class);
         // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when calling
         // addGeofences() and removeGeofences().

@@ -79,5 +79,7 @@
     <string name="title_activity_add_position_by_map">AddPositionByMap</string>
     <string name="title_activity_choose_position_by_map">ChoosePositionByMap</string>
     <string name="action_add_position_by_map">Add position by map</string>
+    <string name="permission_error">Invalid location permission. You need to use ACCESS_FINE_LOCATION with geofences</string>
+    <string name="invalid_address">Invalid address</string>
 
 </resources>

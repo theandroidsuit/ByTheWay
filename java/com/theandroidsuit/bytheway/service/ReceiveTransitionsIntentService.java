@@ -1,6 +1,7 @@
 package com.theandroidsuit.bytheway.service;
 
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +20,8 @@ import android.util.Log;
 
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
+import com.j256.ormlite.android.apptools.OpenHelperManager;
+import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.activity.DetailActivity;
 import com.theandroidsuit.bytheway.activity.ListPositionActivity;
 import com.theandroidsuit.bytheway.activity.MapsActivity;
@@ -26,6 +29,8 @@ import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.GeofenceUtils;
 import com.theandroidsuit.bytheway.geofence.LocationServiceErrorMessages;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
+import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 
 /**
  * Created by Virginia Hernández on 14/01/15.
@@ -39,6 +44,8 @@ import com.theandroidsuit.bytheway.geofence.PositionManager;
 public class ReceiveTransitionsIntentService extends IntentService {
 
     public final String TAG = this.getClass().getName();
+    private DBHelper mDBHelper;
+
 
     /**
      * Sets an identifier for this class' background thread
@@ -104,12 +111,20 @@ public class ReceiveTransitionsIntentService extends IntentService {
                         geofenceIds[index] = geofences.get(index).getRequestId();
                     }
                     String ids = TextUtils.join(GeofenceUtils.GEOFENCE_ID_DELIMITER, geofenceIds);
-                    List<Long> names = new ArrayList<Long>();
+                    List<String> names = new ArrayList<String>();
 
                     // This is for notification
                     for (String id : geofenceIds) {
+                        // TODO
                         int idNum = Integer.valueOf(id).intValue();
-                        names.add(Long.valueOf(idNum));
+                        try {
+                            // Executing action against database
+                            Dao dao = getHelper().getPositionDao();
+                            PositionEntity pos = (PositionEntity) dao.queryForId(idNum);
+                            names.add(pos.getTitle());
+                        }catch (SQLException e) {
+                            Log.e(TAG, e.getMessage());
+                        }
                     }
 
                     String transitionType = getTransitionString(transition);
@@ -149,23 +164,23 @@ public class ReceiveTransitionsIntentService extends IntentService {
      * @param transitionType The type of transition that occurred.
      *
      */
-    private void sendNotification(String transitionType, List<Long> ids) {
+    private void sendNotification(String transitionType, List<String> names) {
 
         Log.d(TAG, "sendNotification");
 
         Intent notificationIntent = null;
 
-        if (ids.size() > 1){
+        if (names.size() > 1){
             // Create an explicit content Intent that starts the main Activity
             notificationIntent = new Intent(getApplicationContext(), ListPositionActivity.class);
 
-            String idsStr = listToString(ids);
+            String idsStr = listToString(names);
             notificationIntent.putExtra(PositionManager.LIST_ID_POSITION_KEY, idsStr);
         }else{
             // Create an explicit content Intent that starts the main Activity
             notificationIntent = new Intent(getApplicationContext(), DetailActivity.class);
 
-            notificationIntent.putExtra(PositionManager.ID_POSITION_KEY, ids.get(0));
+            notificationIntent.putExtra(PositionManager.ID_POSITION_KEY, names.get(0));
         }
         // Construct a task stack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
@@ -185,7 +200,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
         // Set the notification contents
         builder.setSmallIcon(R.drawable.fav)
-               .setContentTitle(getString(R.string.geofence_transition_notification_title, transitionType, ids))
+               .setContentTitle(getString(R.string.geofence_transition_notification_title, transitionType, names))
                .setContentText(getString(R.string.geofence_transition_notification_text))
                .setContentIntent(notificationPendingIntent)
                .setAutoCancel(true);
@@ -198,10 +213,10 @@ public class ReceiveTransitionsIntentService extends IntentService {
         mNotificationManager.notify(0, builder.build());
     }
 
-    private String listToString(List<Long> ids) {
+    private String listToString(List<String> names) {
         StringBuffer sb = new StringBuffer();
-        for(Long id: ids){
-            sb.append(PositionManager.getPositionName(id));
+        for(String name: names){
+            sb.append(name);
         }
         return sb.toString();
     }
@@ -226,4 +241,23 @@ public class ReceiveTransitionsIntentService extends IntentService {
                 return getString(R.string.geofence_transition_unknown);
         }
     }
+
+
+    private DBHelper getHelper() {
+        if (mDBHelper == null) {
+            mDBHelper = OpenHelperManager.getHelper(this, DBHelper.class);
+        }
+        return mDBHelper;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        if (mDBHelper != null) {
+            OpenHelperManager.releaseHelper();
+            mDBHelper = null;
+        }
+        return super.onUnbind(intent);
+    }
+
+
 }

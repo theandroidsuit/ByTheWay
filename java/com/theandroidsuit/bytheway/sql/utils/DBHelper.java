@@ -7,6 +7,8 @@ import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPositionEntity;
 import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
 
 import java.sql.SQLException;
@@ -19,7 +21,10 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
     private static final String DATABASE_NAME = "btw_psitions.db";
     private static final int DATABASE_VERSION = 1;
 
-    private Dao<PositionEntity, Integer> usuarioDao;
+    private Dao<PositionEntity, Integer> positionDao;
+    private Dao<CategoryEntity, Integer> categoryDao;
+    private Dao<CategoryPositionEntity, Integer> categoryPositionDao;
+
 
     public DBHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -29,6 +34,9 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
     public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
         try {
             TableUtils.createTable(connectionSource, PositionEntity.class);
+            TableUtils.createTable(connectionSource, CategoryEntity.class);
+            TableUtils.createTable(connectionSource, CategoryPositionEntity.class);
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -40,17 +48,34 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
     }
 
     public Dao<PositionEntity, Integer> getPositionDao() throws SQLException {
-        if (usuarioDao == null) {
-            usuarioDao = getDao(PositionEntity.class);
+        if (positionDao == null) {
+            positionDao = getDao(PositionEntity.class);
         }
-        return usuarioDao;
+        return positionDao;
+    }
+
+
+    public Dao<CategoryEntity, Integer> getCategoryDao() throws SQLException {
+        if (categoryDao == null) {
+            categoryDao = getDao(CategoryEntity.class);
+        }
+        return categoryDao;
+    }
+
+    public Dao<CategoryPositionEntity, Integer> getCategoryPositionDao() throws SQLException {
+        if (categoryPositionDao == null) {
+            categoryPositionDao = getDao(CategoryPositionEntity.class);
+        }
+        return categoryPositionDao;
     }
 
 
     @Override
     public void close() {
         super.close();
-        usuarioDao = null;
+        positionDao = null;
+        categoryDao = null;
+        categoryPositionDao = null;
     }
 
 }

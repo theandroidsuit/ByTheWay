@@ -4,6 +4,8 @@ import android.content.Context;
 import android.util.Log;
 
 import com.theandroidsuit.bytheway.sql.bo.BTWEntity;
+import com.theandroidsuit.bytheway.sql.utils.BTWDS;
+import com.theandroidsuit.bytheway.sql.utils.CategoryDS;
 import com.theandroidsuit.bytheway.sql.utils.PositionDS;
 
 import java.sql.SQLException;
@@ -17,16 +19,12 @@ import java.util.List;
  */
 public abstract class BTWDAO {
 
+    private final String TAG = this.getClass().getName();
 
-    public final String TAG = this.getClass().getName();
+    private BTWDS ds;
 
-    private PositionDS ds;
-    private Context ctx;
-
-    BTWDAO(Context ctx){
-
-        this.ctx = ctx;
-        ds = new PositionDS(ctx);
+    BTWDAO(BTWDS ds){
+        this.ds = ds;
     }
 
     public BTWEntity create(BTWEntity entity){
@@ -34,7 +32,7 @@ public abstract class BTWDAO {
         BTWEntity ent = null;
         try{
             ds.open ();
-            ent = ds.createPosition(entity);
+            ent = ds.createEntity(entity);
             ds.close();
         }catch (SQLException e){
             Log.e(TAG, e.getMessage());
@@ -47,7 +45,7 @@ public abstract class BTWDAO {
         BTWEntity pos = null;
         try{
             ds.open ();
-            pos = ds.updatePosition(position);
+            pos = ds.updateEntity(position);
             ds.close();
         }catch (SQLException e){
             Log.e(TAG, e.getMessage());
@@ -59,7 +57,7 @@ public abstract class BTWDAO {
     public void delete(BTWEntity position){
         try{
             ds.open ();
-            ds.deletePosition(position);
+            ds.deleteEntity(position);
             ds.close();
         }catch (SQLException e){
             Log.e(TAG, e.getMessage());
