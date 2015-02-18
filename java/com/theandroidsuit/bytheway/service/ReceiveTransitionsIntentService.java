@@ -187,14 +187,14 @@ public class ReceiveTransitionsIntentService extends IntentService {
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
         // Adds the main Activity to the task stack as the parent
-       // stackBuilder.addParentStack(MapsActivity.class);
+        stackBuilder.addParentStack(DetailActivity.class);
         
         // Push the content Intent onto the stack
         stackBuilder.addNextIntentWithParentStack(notificationIntent);
 
         // Get a PendingIntent containing the entire back stack
         PendingIntent notificationPendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+                stackBuilder.getPendingIntent(0, Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         // Get a notification builder that's compatible with platform versions >= 4
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
