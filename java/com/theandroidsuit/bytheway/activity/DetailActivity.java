@@ -9,9 +9,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -28,24 +26,29 @@ import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.Category;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPosition;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
 import java.sql.SQLException;
+import java.util.List;
 
 
 public class DetailActivity extends ActionBarActivity {
 
     public final String TAG = this.getClass().getName();
 
-    private PositionEntity positionToShow = null;
+    private Category categoryToShow = null;
+    private Position positionToShow = null;
     private Long idToShow = null;
 
     private GoogleMap mMap;
     private ImageView image = null;
     private TextView title = null;
     private TextView description = null;
+    private TextView category = null;
 
 
     private DBHelper mDBHelper;
@@ -65,7 +68,8 @@ public class DetailActivity extends ActionBarActivity {
 
             if(null == positionToShow) {
                 Dao dao = getHelper().getPositionDao();
-                positionToShow = (PositionEntity) dao.queryForId(idToShow);
+                positionToShow = (Position) dao.queryForId(idToShow);
+                categoryToShow = getCategoryByPosition(positionToShow);
             }
 
             setUpMapIfNeeded();
@@ -73,8 +77,7 @@ public class DetailActivity extends ActionBarActivity {
             image = (ImageView) findViewById(R.id.itemStatus);
             title = (TextView) findViewById(R.id.itemTitle);
             description = (TextView) findViewById(R.id.itemDescription);
-            //sensitive = (SeekBar) findViewById(R.id.itemSensitive);
-            //sensitive.setEnabled(false);
+            category = (TextView) findViewById(R.id.itemCategory);
 
             final Long idToUpdate = positionToShow.getId();
             ImageView updateButton = (ImageView) findViewById(R.id.imageEdit);
@@ -101,7 +104,30 @@ public class DetailActivity extends ActionBarActivity {
     protected void onResume() {
         super.onResume();
         setViewValuesFromPosition();
+    }
 
+
+    private CategoryPosition getCategoryPositionByPosition(Position position) throws SQLException {
+        Dao dao = getHelper().getCategoryPositionDao();
+        List<CategoryPosition> catPosList = dao.queryForEq(CategoryPosition.COLUMN_ID_POSITION, position.getId());
+
+        CategoryPosition catPos = null;
+        if (null != catPosList && !catPosList.isEmpty()){
+            catPos = catPosList.get(0);
+        }
+        return catPos;
+    }
+
+    private Category getCategoryByPosition(Position position) throws SQLException {
+        Category cat = null;
+        CategoryPosition catPos = getCategoryPositionByPosition(position);
+
+        if (null != catPos){
+            Dao dao = getHelper().getCategoryDao();
+            cat = (Category) dao.queryForId(catPos.getCategory().getId());
+        }
+
+        return cat;
     }
 
     private void setViewValuesFromPosition() {
@@ -109,7 +135,7 @@ public class DetailActivity extends ActionBarActivity {
 
         title.setText(positionToShow.getTitle());
         description.setText(positionToShow.getDescription());
-        //sensitive.setProgress((int)positionToShow.getSensitive());
+        category.setText(categoryToShow.getTitle());
 
         String uri = "drawable/off";
 
@@ -144,6 +170,7 @@ public class DetailActivity extends ActionBarActivity {
         super.onSaveInstanceState(outState);
         outState.putParcelable(PositionManager.POSITION_KEY, positionToShow);
         outState.putLong(PositionManager.ID_POSITION_KEY,idToShow);
+        outState.putParcelable(PositionManager.CATEGORY_KEY, categoryToShow);
     }
 
 
@@ -179,7 +206,7 @@ public class DetailActivity extends ActionBarActivity {
         markerOptions.title(positionToShow.getTitle());
 
         // Setting the marker Icon
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
 
         // Placing a marker on the touched position
         Marker marker = mMap.addMarker(markerOptions);
@@ -201,28 +228,5 @@ public class DetailActivity extends ActionBarActivity {
         // Get back the mutable Circle
         mMap.addCircle(circleOptions);
 
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_detail_activity, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 }

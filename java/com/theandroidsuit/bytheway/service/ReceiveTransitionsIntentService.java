@@ -29,7 +29,7 @@ import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.GeofenceUtils;
 import com.theandroidsuit.bytheway.geofence.LocationServiceErrorMessages;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 
 /**
@@ -112,7 +112,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
                     }
                     String ids = TextUtils.join(GeofenceUtils.GEOFENCE_ID_DELIMITER, geofenceIds);
                     List<String> names = new ArrayList<String>();
-
+                    List<Long> idList = new ArrayList<Long>();
                     // This is for notification
                     for (String id : geofenceIds) {
                         // TODO
@@ -120,8 +120,9 @@ public class ReceiveTransitionsIntentService extends IntentService {
                         try {
                             // Executing action against database
                             Dao dao = getHelper().getPositionDao();
-                            PositionEntity pos = (PositionEntity) dao.queryForId(idNum);
+                            Position pos = (Position) dao.queryForId(idNum);
                             names.add(pos.getTitle());
+                            idList.add(pos.getId());
                         }catch (SQLException e) {
                             Log.e(TAG, e.getMessage());
                         }
@@ -131,7 +132,7 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
                     // Now we must to register into APP
                     if (transition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-                        sendNotification(transitionType, names);
+                        sendNotification(transitionType, names, idList);
                         vibrate();
                     }
 
@@ -164,32 +165,32 @@ public class ReceiveTransitionsIntentService extends IntentService {
      * @param transitionType The type of transition that occurred.
      *
      */
-    private void sendNotification(String transitionType, List<String> names) {
+    private void sendNotification(String transitionType, List<String> names, List<Long> ids) {
 
         Log.d(TAG, "sendNotification");
 
         Intent notificationIntent = null;
 
+        // Create an explicit content Intent that starts the main Activity
         if (names.size() > 1){
-            // Create an explicit content Intent that starts the main Activity
-            notificationIntent = new Intent(getApplicationContext(), ListPositionActivity.class);
+            String idsStr = listToString(ids);
 
-            String idsStr = listToString(names);
+            notificationIntent = new Intent(getApplicationContext(), ListPositionActivity.class);
             notificationIntent.putExtra(PositionManager.LIST_ID_POSITION_KEY, idsStr);
         }else{
             // Create an explicit content Intent that starts the main Activity
             notificationIntent = new Intent(getApplicationContext(), DetailActivity.class);
-
-            notificationIntent.putExtra(PositionManager.ID_POSITION_KEY, names.get(0));
+            notificationIntent.putExtra(PositionManager.ID_POSITION_KEY, ids.get(0));
         }
+
         // Construct a task stack
         TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
 
         // Adds the main Activity to the task stack as the parent
-        stackBuilder.addParentStack(MapsActivity.class);
+       // stackBuilder.addParentStack(MapsActivity.class);
         
         // Push the content Intent onto the stack
-        stackBuilder.addNextIntent(notificationIntent);
+        stackBuilder.addNextIntentWithParentStack(notificationIntent);
 
         // Get a PendingIntent containing the entire back stack
         PendingIntent notificationPendingIntent =
@@ -213,10 +214,10 @@ public class ReceiveTransitionsIntentService extends IntentService {
         mNotificationManager.notify(0, builder.build());
     }
 
-    private String listToString(List<String> names) {
+    private String listToString(List<Long> ids) {
         StringBuffer sb = new StringBuffer();
-        for(String name: names){
-            sb.append(name);
+        for(Long id: ids){
+            sb.append(id);
         }
         return sb.toString();
     }

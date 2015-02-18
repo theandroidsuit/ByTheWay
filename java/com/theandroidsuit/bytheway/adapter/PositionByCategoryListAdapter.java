@@ -3,11 +3,13 @@ package com.theandroidsuit.bytheway.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
+import android.widget.ArrayAdapter;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.CompoundButton;
 import android.widget.RelativeLayout;
 import android.widget.Switch;
@@ -16,7 +18,6 @@ import android.widget.TextView;
 import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.activity.DetailActivity;
-import com.theandroidsuit.bytheway.activity.ListPositionActivity;
 import com.theandroidsuit.bytheway.geofence.GeofenceManager;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
 import com.theandroidsuit.bytheway.sql.databaseTable.Position;
@@ -24,42 +25,108 @@ import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 
 /**
  * Created by Virginia Hernández on 19/01/15.
  */
-public class PositionListAdapter extends BaseAdapter implements Switch.OnCheckedChangeListener{
+public class PositionByCategoryListAdapter extends BaseExpandableListAdapter implements Switch.OnCheckedChangeListener{
 
     public final String TAG = this.getClass().getName();
+    public static final int POSITION_UPDATED_EXT = 4;
 
-    public static final int POSITION_UPDATED = 3;
 
-    private int resource;
+    //private int resource;
     private LayoutInflater inflater;
     private Context context;
     private DBHelper mDBHelper;
     private String startingFlow;
-    private List<Position> data;
-  //  private ListPositionActivity callback;
 
-    public PositionListAdapter(Context ctx, int resourceId, List<Position> objs, DBHelper helper, String strFlow) {
-        resource = resourceId;
+    private List<String> listDataHeader; // header titles
+    // child data in format of header title, child title
+    private HashMap<String, List<Position>> listDataChild;
+
+
+    public PositionByCategoryListAdapter(Context ctx, DBHelper helper, List<String> headers, HashMap<String, List<Position>> data, String strFlow) {
+
         inflater = LayoutInflater.from(ctx);
         context = ctx;
-    //    callback = (ListPositionActivity) ctx;
-        data = objs;
         mDBHelper = helper;
         startingFlow = strFlow;
+        listDataHeader = headers;
+        listDataChild = data;
+    }
+
+
+    public void updateAdapterData(List<String> newlistHeaders, HashMap<String, List<Position>> newListData) {
+        listDataHeader.clear();
+        listDataHeader.addAll(newlistHeaders);
+
+        listDataChild.clear();
+        listDataChild.putAll(newListData);
+
+        this.notifyDataSetChanged();
+    }
+
+
+    @Override
+    public int getGroupCount() {
+        return listDataHeader.size();
     }
 
     @Override
-    public View getView(int pos, View convertView, ViewGroup parent) {
+    public int getChildrenCount(int groupPosition) {
+        return this.listDataChild.get(this.listDataHeader.get(groupPosition)).size();
+    }
 
-        /* create a new view of my layout and inflate it in the row */
-        convertView = (RelativeLayout) inflater.inflate(resource, null);
+    @Override
+    public Object getGroup(int groupPosition) {
+        return this.listDataHeader.get(groupPosition);
+    }
 
-        final Position position = getItem(pos);
+    @Override
+    public Object getChild(int groupPosition, int childPosition) {
+        return this.listDataChild.get(this.listDataHeader.get(groupPosition)).get(childPosition);
+    }
+
+    @Override
+    public long getGroupId(int groupPosition) {
+        return groupPosition;
+    }
+
+    @Override
+    public long getChildId(int groupPosition, int childPosition) {
+        return childPosition;
+    }
+
+    @Override
+    public boolean hasStableIds() {
+        return false;
+    }
+
+    @Override
+    public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+        String headerTitle = (String) getGroup(groupPosition);
+
+        if (convertView == null) {
+            convertView = inflater.inflate(R.layout.item_list_category, null);
+        }
+
+        TextView lblListHeader = (TextView) convertView.findViewById(R.id.categoryListHeader);
+        lblListHeader.setTypeface(null, Typeface.BOLD);
+        lblListHeader.setText(headerTitle);
+
+        return convertView;
+
+    }
+
+    @Override
+    public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+                /* create a new view of my layout and inflate it in the row */
+        convertView = (RelativeLayout) inflater.inflate(R.layout.item_list_position, null);
+
+        final Position position = (Position) getChild(groupPosition, childPosition);
 
         TextView txtTitle = (TextView) convertView.findViewById(R.id.positionListItemTitle);
         txtTitle.setText(position.getTitle());
@@ -68,13 +135,14 @@ public class PositionListAdapter extends BaseAdapter implements Switch.OnChecked
             @Override
             public void onClick(View v) {
 
-                // Go to detail
+                // TODO: Go to detail
                 Intent intent = new Intent(context, DetailActivity.class);
 
-                intent.putExtra(PositionManager.ID_POSITION_KEY, position.getId());
-                intent.putExtra(BTWUtils.STARTING_FLOW, startingFlow);
 
-                ((Activity)context).startActivityForResult(intent, PositionListAdapter.POSITION_UPDATED);
+                intent.putExtra(BTWUtils.STARTING_FLOW, startingFlow);
+                intent.putExtra(PositionManager.ID_POSITION_KEY, position.getId());
+
+                ((Activity)context).startActivityForResult(intent, PositionByCategoryListAdapter.POSITION_UPDATED_EXT);
             }
         });
 
@@ -92,28 +160,9 @@ public class PositionListAdapter extends BaseAdapter implements Switch.OnChecked
         return convertView;
     }
 
-    public void updateAdapterData(List<Position> newlist) {
-        data.clear();
-        data.addAll(newlist);
-        this.notifyDataSetChanged();
-    }
-
     @Override
-    public int getCount() {
-        if (null == data)
-            return 0;
-
-        return data.size();
-    }
-
-    @Override
-    public Position getItem(int position) {
-        return data.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return data.get(position).getId();
+    public boolean isChildSelectable(int groupPosition, int childPosition) {
+        return true;
     }
 
     @Override
@@ -155,6 +204,5 @@ public class PositionListAdapter extends BaseAdapter implements Switch.OnChecked
 
         return changed;
     }
-
 
 }

@@ -1,6 +1,5 @@
 package com.theandroidsuit.bytheway.activity;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -12,10 +11,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -35,11 +35,15 @@ import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.error.BTWOperationError;
 import com.theandroidsuit.bytheway.geofence.GeofenceManager;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.Category;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPosition;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class AddCurrentPositionActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener{
@@ -47,6 +51,10 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
     public final String TAG = this.getClass().getName();
 
     private DBHelper mDBHelper;
+
+
+    static ArrayAdapter<String> dataAdapter;
+    private static final int CATEGORY_ADDED = 1;
 
     private GoogleMap mMap;
     private Circle circleSensitivity;
@@ -62,13 +70,8 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
                 BTWUtils.ADD_POSITION_ACTIVITY : getIntent().getStringExtra(BTWUtils.STARTING_FLOW);
 
         setUpMapIfNeeded();
-
-
-        // Setting the listener
-        sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
-        sensitivity.setOnSeekBarChangeListener(this);
-        sensitivity.setProgress(40);
-
+        setUpSensitivity();
+        setUpCategory();
 
         ImageView edit = (ImageView) findViewById(R.id.imageEdit);
         edit.setOnClickListener(new View.OnClickListener() {
@@ -98,6 +101,72 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
             }
         });
 
+
+        ImageView addCategory = (ImageView) findViewById(R.id.addCategory);
+        addCategory.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), AddCategoryActivity.class);
+                startActivityForResult(intent, CATEGORY_ADDED);
+            }
+        });
+    }
+
+    private void setUpSensitivity() {
+        // Setting the listener
+        sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
+        sensitivity.setOnSeekBarChangeListener(this);
+        sensitivity.setProgress(40);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CATEGORY_ADDED) {
+            if (resultCode == RESULT_OK) {
+
+                String newCategoryName = data.getStringExtra("newCategoryName");
+                setUpCategory();
+
+                // Select new Category in spinner
+                if (!newCategoryName.equals(null)) {
+                    int spinnerPosition = dataAdapter.getPosition(newCategoryName);
+                    Spinner spinnerCat = (Spinner) findViewById(R.id.itemEditCategory);
+
+                    spinnerCat.setSelection(spinnerPosition);
+                }
+
+                // Notify the change! (I think this is not necessary 'cause I've created the adapter)
+                dataAdapter.notifyDataSetChanged();
+            }
+        }
+
+    }
+
+    private void setUpCategory() {
+
+        Spinner spinnerCat = (Spinner) findViewById(R.id.itemEditCategory);
+        List<String> list = new ArrayList<>();
+
+        Dao dao;
+        try {
+            dao = getHelper().getCategoryDao();
+            List<Category> listCategory = dao.queryForAll();
+            if (null != listCategory && !listCategory.isEmpty()){
+                for(Category item: listCategory) {
+                    list.add(item.getTitle());
+                }
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+
+        dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,list);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinnerCat.setAdapter(dataAdapter);
     }
 
     private void confirmDelete(){
@@ -136,24 +205,53 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
     private void addPosition()throws BTWOperationError{
         Dao dao;
         try {
+
+            // Create Position
             dao = getHelper().getPositionDao();
-            PositionEntity position  = getPositionValuesFromView();
+            Position position  = getPositionValuesFromView();
             dao.create(position);
 
+            // Getting Category
+            dao = getHelper().getCategoryDao();
+            Spinner spinner = (Spinner)findViewById(R.id.itemEditCategory);
+
+            String catName = spinner.getSelectedItem().toString();
+            List<Category> catList = dao.queryForEq(Category.COLUMN_TITLE,catName);
+            Category cat = null;
+            if (null != catList && !catList.isEmpty()){
+                cat = catList.get(0);
+            }
+
+            // Create Category - Position Relationship
+            CategoryPosition catPos = new CategoryPosition();
+            catPos.setCategory(cat);
+            catPos.setPosition(position);
+
+//            catPos.setPositionId(position.getId());
+//            if (null != cat){
+//                catPos.setCategoryId(cat.getId());
+//            }else{
+//                catPos.setCategoryId(1l); // Category by Default
+//            }
+
+            dao = getHelper().getCategoryPositionDao();
+            dao.create(catPos);
+
+            // Adding new Geopfence at map
             addNewGeofence(position);
         } catch (SQLException e) {
             Log.e(TAG, e.getMessage());
         }
     }
 
-    private void addNewGeofence(PositionEntity position) {
+    private void addNewGeofence(Position position) {
         GeofenceManager geoManager = new GeofenceManager(getApplicationContext());
         geoManager.requestOneGeofence(PositionManager.translateToGeofence(position).toGeofence());
         PositionManager.addActiveGeofence(position);
     }
 
-    private PositionEntity getPositionValuesFromView() throws BTWOperationError {
-        PositionEntity pos = new PositionEntity();
+    private Position getPositionValuesFromView() throws BTWOperationError {
+        Position pos = new Position();
         Location location = getCurrentLocation();
 
         pos.setLatitude(location.getLatitude());
@@ -231,7 +329,7 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
         //markerOptions.title(positionToShow.getTitle());
 
         // Setting the marker Icon
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
 
         // Placing a marker on the touched position
         Marker marker = mMap.addMarker(markerOptions);
@@ -248,7 +346,7 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
                 .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
                 .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
                 .strokeWidth(1f)
-                .radius(GeofenceManager.DEFAULT_RADIUS); // In meters
+                .radius(PositionManager.DEFAULT_RADIUS); // In meters
 
         // Get back the mutable Circle
         circleSensitivity = mMap.addCircle(circleOptions);
@@ -277,28 +375,6 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
             OpenHelperManager.releaseHelper();
             mDBHelper = null;
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_add_position, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     @Override

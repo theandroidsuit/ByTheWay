@@ -6,7 +6,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -31,7 +30,7 @@ import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.GeofenceManager;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
@@ -58,7 +57,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
 
     private DBHelper mDBHelper;
 
-    private ArrayList<PositionEntity> valuesActive = null;
+    private ArrayList<Position> valuesActive = null;
 
     private Boolean changeGeofences = true;
     private Boolean initialize = false;
@@ -135,7 +134,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
             // Retrieve from database
             Dao dao = getHelper().getPositionDao();
 
-            valuesActive = (ArrayList<PositionEntity>) dao.queryForEq(PositionEntity.COLUMN_STATUS, PositionManager.STATUS_ACTIVATED);
+            valuesActive = (ArrayList<Position>) dao.queryForEq(Position.COLUMN_STATUS, PositionManager.STATUS_ACTIVATED);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -146,7 +145,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
         putPositionsAtMap();
         setInfoWindowListeners();
 
-        if (!initialize && !changeGeofences ) {
+        if (!initialize && !changeGeofences  && null != valuesActive) {
 
             PositionManager.setGeofencesToActivate(valuesActive);
 
@@ -200,6 +199,11 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 break;
+            case R.id.action_manage_categories:
+                intent = new Intent(MapsActivity.this, ManageCategoryActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                break;
             /*case R.id.action_add_position_by_map:
                 intent = new Intent(MapsActivity.this, MapsFragmentActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -225,8 +229,8 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
         }
     }
 
-    private void setAllMarkerAtMap(List<PositionEntity> values) {
-        for(PositionEntity item: values){
+    private void setAllMarkerAtMap(List<Position> values) {
+        for(Position item: values){
             addMarkerOnMap(item);
         }
     }
@@ -297,7 +301,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
 
     }
 
-    private void addMarkerOnMap(PositionEntity pos) {
+    private void addMarkerOnMap(Position pos) {
         // Creating a marker
         MarkerOptions markerOptions = new MarkerOptions();
 
@@ -311,7 +315,7 @@ public class MapsActivity extends ActionBarActivity implements LocationListener 
         markerOptions.title(pos.getTitle());
 
         // Setting the marker Icon
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
 
         // Placing a marker on the touched position
         Marker marker = mMap.addMarker(markerOptions);

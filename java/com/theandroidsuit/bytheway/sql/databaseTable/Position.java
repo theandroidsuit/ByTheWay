@@ -11,7 +11,7 @@ import com.j256.ormlite.table.DatabaseTable;
  * Created by Virginia Hernández on 21/01/15.
  */
 @DatabaseTable
-public class PositionEntity implements Parcelable{
+public class Position implements Parcelable{
 
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_LATITUDE = "latitude";
@@ -94,7 +94,7 @@ public class PositionEntity implements Parcelable{
         this.status = status;
     }
 
-    public PositionEntity() {
+    public Position() {
         // TODO Auto-generated constructor stub
     }
 
@@ -123,7 +123,7 @@ public class PositionEntity implements Parcelable{
     /**
      * A constructor that initializes the Position object
      **/
-    public PositionEntity(long id, long lat, long lng, int sens, String title, String desc, String status){
+    public Position(long id, long lat, long lng, int sens, String title, String desc, String status){
         this.id = id;
         this.latitude = lat;
         this.longitude = lng;
@@ -138,7 +138,7 @@ public class PositionEntity implements Parcelable{
      * This constructor is invoked by the method createFromParcel(Parcel source) of
      * the object CREATOR
      **/
-    private PositionEntity(Parcel in){
+    private Position(Parcel in){
         this.id = in.readLong();
         this.latitude = in.readDouble();
         this.longitude = in.readDouble();
@@ -148,16 +148,16 @@ public class PositionEntity implements Parcelable{
         this.status = in.readString();
     }
 
-    public static final Parcelable.Creator<PositionEntity> CREATOR = new Parcelable.Creator<PositionEntity>() {
+    public static final Parcelable.Creator<Position> CREATOR = new Parcelable.Creator<Position>() {
 
         @Override
-        public PositionEntity createFromParcel(Parcel source) {
-            return new PositionEntity(source);
+        public Position createFromParcel(Parcel source) {
+            return new Position(source);
         }
 
         @Override
-        public PositionEntity[] newArray(int size) {
-            return new PositionEntity[size];
+        public Position[] newArray(int size) {
+            return new Position[size];
         }
     };
 

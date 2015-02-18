@@ -11,14 +11,15 @@ import com.j256.ormlite.table.DatabaseTable;
  * Created by Virginia Hernández on 21/01/15.
  */
 @DatabaseTable
-public class CategoryEntity implements Parcelable{
+public class Category implements Parcelable{
 
+    public static final long   DEFAULT_CATEGORY_ID = 1l;
     public static final String COLUMN_ID = "_id";
     public static final String COLUMN_TITLE = "title";
     public static final String COLUMN_STATUS = "status";
 
 
-    @DatabaseField(generatedId = true, columnName = COLUMN_ID)
+    @DatabaseField(generatedId = true, columnName = COLUMN_ID, allowGeneratedIdInsert = true)
     private long id = -1;
     @DatabaseField(columnName = COLUMN_TITLE)
     private String title;
@@ -50,7 +51,7 @@ public class CategoryEntity implements Parcelable{
         this.status = status;
     }
 
-    public CategoryEntity() {
+    public Category() {
         // TODO Auto-generated constructor stub
     }
 
@@ -75,7 +76,7 @@ public class CategoryEntity implements Parcelable{
     /**
      * A constructor that initializes the Position object
      **/
-    public CategoryEntity(long id, String title, String status){
+    public Category(long id, String title, String status){
         this.id = id;
         this.title = title;
         this.status = status;
@@ -86,22 +87,22 @@ public class CategoryEntity implements Parcelable{
      * This constructor is invoked by the method createFromParcel(Parcel source) of
      * the object CREATOR
      **/
-    private CategoryEntity(Parcel in){
+    private Category(Parcel in){
         this.id = in.readLong();
         this.title = in.readString();
         this.status = in.readString();
     }
 
-    public static final Creator<CategoryEntity> CREATOR = new Creator<CategoryEntity>() {
+    public static final Creator<Category> CREATOR = new Creator<Category>() {
 
         @Override
-        public CategoryEntity createFromParcel(Parcel source) {
-            return new CategoryEntity(source);
+        public Category createFromParcel(Parcel source) {
+            return new Category(source);
         }
 
         @Override
-        public CategoryEntity[] newArray(int size) {
-            return new CategoryEntity[size];
+        public Category[] newArray(int size) {
+            return new Category[size];
         }
     };
 

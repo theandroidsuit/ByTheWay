@@ -19,7 +19,6 @@ import java.util.List;
 public class GeofenceManager {
 
     public static final String INIT_GEOFENCE_KEY = "init_geofence_key";
-    public static final int DEFAULT_RADIUS = 40;
     private Context context;
 
     public final String TAG = this.getClass().getName();

@@ -12,11 +12,28 @@
         android:orientation="horizontal"
         android:weightSum="4">
 
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2">
+            <LinearLayout
+                android:id="@+id/layoutRight"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/map_shadow">
+                <fragment
+                    android:id="@+id/mapPosition"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:name="com.google.android.gms.maps.SupportMapFragment" />
+            </LinearLayout>
+        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/layoutLeft"
-            android:layout_width="263dp"
-            android:layout_height="match_parent">
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2">
             <ImageView
                 android:id="@+id/itemStatus"
                 android:layout_width="wrap_content"
@@ -32,6 +49,17 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignTop="@+id/itemStatus"
+                android:layout_toRightOf="@+id/itemStatus"
+                android:layout_toEndOf="@+id/itemStatus"
+                android:layout_marginLeft="5dp"
+                android:textStyle="bold"/>
+
+            <TextView
+                android:id="@+id/itemCategory"
+                android:text="category"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/itemTitle"
                 android:layout_toRightOf="@+id/itemStatus"
                 android:layout_toEndOf="@+id/itemStatus"
                 android:layout_marginLeft="5dp"
@@ -65,21 +93,5 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent">
-        <LinearLayout
-            android:id="@+id/layoutRight"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/map_shadow"
-            android:layout_weight="1">
-            <fragment
-                android:id="@+id/mapPosition"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:name="com.google.android.gms.maps.SupportMapFragment" />
-        </LinearLayout>
-        </RelativeLayout>
     </LinearLayout>
 </RelativeLayout>

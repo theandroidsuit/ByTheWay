@@ -3,7 +3,8 @@ package com.theandroidsuit.bytheway.geofence;
 import android.content.Context;
 
 import com.google.android.gms.location.Geofence;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.R;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +19,13 @@ public class PositionManager {
     public static final String LIST_ID_POSITION_KEY = "listIdPositions";
     public static final String ID_POSITION_KEY = "idPosition";
     public static final String POSITION_KEY = "position";
+    public static final String CATEGORY_KEY = "category";
+    public static final String CATEGORY_POSITION_KEY = "category_position";
+
+
     public static final String LOCATION_SELECTED_KEY = "location_selected_key";
+
+    public static final String CATEGORY_DEFAULT = "Default";
 
     public static final String STATUS_ACTIVATED = "on";
     public static final String STATUS_DEACTIVATE = "off";
@@ -27,14 +34,22 @@ public class PositionManager {
     public static final String SENSIVILITY_FILL_COLOR = "#8881DAF5";
     public static final String SENSIVILITY_BORDER_COLOR = "#81BEF7";
 
+    public static final String LIST_MODE_KEY = "mode";
+    public static final String LIST_MODE_TITLE = "modeTitle";
+    public static final String LIST_MODE_CATEGORY = "modeCategory";
+
+    public static final int MARKER_IMAGE_RESOURCE = R.drawable.marker_favs;
+
+    public static final int DEFAULT_RADIUS = 40;
+
     /* GEOFENCES */
     private static List<Geofence> geofencesToActivate;
 
 
-    public static void setGeofencesToActivate(List<PositionEntity> values){
+    public static void setGeofencesToActivate(List<Position> values){
         geofencesToActivate = new ArrayList<Geofence>();
 
-        for(PositionEntity item: values){
+        for(Position item: values){
             SimpleGeofence gf = translateToGeofence(item);
 
             geofencesToActivate.add(gf.toGeofence());
@@ -42,7 +57,7 @@ public class PositionManager {
     }
 
 
-    public static void addActiveGeofence(PositionEntity positionEntity){
+    public static void addActiveGeofence(Position positionEntity){
         if(null == geofencesToActivate){
             geofencesToActivate = new ArrayList<>();
         }
@@ -51,7 +66,7 @@ public class PositionManager {
         geofencesToActivate.add(geofence.toGeofence());
     }
 
-    public static void removeActiveGeofence(PositionEntity positionEntity) {
+    public static void removeActiveGeofence(Position positionEntity) {
         if (null == geofencesToActivate) {
             return;
         } else{
@@ -82,7 +97,7 @@ public class PositionManager {
     }
 
 
-    public static SimpleGeofence translateToGeofence(PositionEntity pos){
+    public static SimpleGeofence translateToGeofence(Position pos){
         SimpleGeofence gf = new SimpleGeofence(
                 String.valueOf(pos.getId()),
                 pos.getLatitude(),

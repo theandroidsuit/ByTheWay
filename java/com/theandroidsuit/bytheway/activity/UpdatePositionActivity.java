@@ -10,9 +10,11 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -31,11 +33,15 @@ import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.GeofenceManager;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.sql.databaseTable.Category;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPosition;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class UpdatePositionActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener, GoogleMap.OnMarkerDragListener{
@@ -44,10 +50,14 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
     private static final String ID_TO_UPDATE_KEY = "idToUpdate";
 
-    private PositionEntity posEdited = null;
+    private Position posEdited = null;
+    private Category catEdited = null;
 
     private DBHelper mDBHelper;
     private Long idToUpdate = null;
+
+    static ArrayAdapter<String> dataAdapter;
+    private static final int CATEGORY_ADDED = 1;
 
     private GoogleMap mMap;
     private SeekBar sensitivity;
@@ -72,7 +82,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
             // Actions for consolidate changes
             Dao dao = getHelper().getPositionDao();
-            final PositionEntity oldValuePos = (PositionEntity) dao.queryForId(idToUpdate);
+            final Position oldValuePos = (Position) dao.queryForId(idToUpdate);
 
             // Get Original object
             if (null == posEdited) {
@@ -82,6 +92,10 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
             setUpMapIfNeeded();
             setupListeners();
+            setUpCategory();
+
+            catEdited = getCategoryByPosition(posEdited);
+            setSelectedCategorySpinner(catEdited.getTitle());
 
             if (null == savedInstanceState) // Solo la primera vez
                 putStuffOnMap();
@@ -90,7 +104,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
             edit.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    PositionEntity pos = getPositionValuesFromView();
+                    Position pos = getPositionValuesFromView();
 
                     updatePosition(oldValuePos, pos);
 
@@ -117,13 +131,23 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
                 }
             });
 
+            ImageView addCategory = (ImageView) findViewById(R.id.addCategory);
+            addCategory.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getApplicationContext(), AddCategoryActivity.class);
+                    startActivityForResult(intent, CATEGORY_ADDED);
+                }
+            });
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
 
-    private void confirmDelete(final PositionEntity oldValuePos){
+
+    private void confirmDelete(final Position oldValuePos){
 
         AlertDialog.Builder alert = new AlertDialog.Builder(this);
         alert.setMessage("Delete this position?");
@@ -159,7 +183,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
     }
 
 
-    private void deletePosition(PositionEntity pos){
+    private void deletePosition(Position pos){
         try {
             // Executing action against database
             Dao dao = getHelper().getPositionDao();
@@ -169,7 +193,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         }
     }
 
-    private void updatePosition(PositionEntity originalPos, PositionEntity newPos){
+    private void updatePosition(Position originalPos, Position newPos){
 
         if (!originalPos.getStatus().equals(newPos.getStatus())){
             // The status has change! This trigger an action in geofence
@@ -195,13 +219,138 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
             // Executing action against database
             Dao dao = getHelper().getPositionDao();
             dao.update(newPos);
+
+
+            // Getting New Category
+            Category cat = getCategoryFromView();
+
+            // Getting Old Category - Position Relationship (if exist)
+            CategoryPosition catPosOld = getCategoryPositionByPosition(newPos);
+
+            // Update/Create Category - Position Relationship
+            dao = getHelper().getCategoryPositionDao();
+            if (null != catPosOld){
+
+                catPosOld.setCategory(cat);
+                //catPosOld.setCategoryId(cat.getId());
+                dao.update(catPosOld);
+
+            }else {
+                CategoryPosition catPos = new CategoryPosition();
+                catPos.setCategory(cat);
+                catPos.setPosition(newPos);
+//                catPos.setPositionId(newPos.getId());
+//                if (null != cat){
+//                    catPos.setCategoryId(cat.getId());
+//                }else{
+//                    catPos.setCategoryId(0l);
+//                }
+
+                dao.create(catPos);
+            }
+
+
         }catch (SQLException e) {
             Log.e(TAG, e.getMessage());
         }
     }
 
+    private Category getCategoryFromView()throws SQLException{
+        Category cat = null;
 
-    private PositionEntity getPositionValuesFromView() {
+        Dao dao = getHelper().getCategoryDao();
+        Spinner spinner = (Spinner)findViewById(R.id.itemEditCategory);
+
+        String catName = spinner.getSelectedItem().toString();
+        List<Category> catList = dao.queryForEq(Category.COLUMN_TITLE,catName);
+        if (null != catList && !catList.isEmpty()){
+            cat = catList.get(0);
+        }
+
+        return cat;
+    }
+
+    private CategoryPosition getCategoryPositionByPosition(Position position) throws SQLException {
+        Dao dao = getHelper().getCategoryPositionDao();
+        List<CategoryPosition> catPosList = dao.queryForEq(CategoryPosition.COLUMN_ID_POSITION, position.getId());
+
+        CategoryPosition catPos = null;
+        if (null != catPosList && !catPosList.isEmpty()){
+            catPos = catPosList.get(0);
+        }
+        return catPos;
+    }
+
+    private Category getCategoryByPosition(Position position) throws SQLException {
+        Category cat = null;
+        CategoryPosition catPos = getCategoryPositionByPosition(position);
+
+        if (null != catPos){
+            Dao dao = getHelper().getCategoryDao();
+            cat = (Category) dao.queryForId(catPos.getCategory().getId());
+        }
+
+        return cat;
+    }
+
+
+
+    private void setUpCategory() {
+
+        Spinner spinnerCat = (Spinner) findViewById(R.id.itemEditCategory);
+        List<String> list = new ArrayList<>();
+
+        Dao dao;
+        try {
+            dao = getHelper().getCategoryDao();
+            List<Category> listCategory = dao.queryForAll();
+            if (null != listCategory && !listCategory.isEmpty()){
+                for(Category item: listCategory) {
+                    list.add(item.getTitle());
+                }
+            }
+        } catch (SQLException e) {
+            Log.e(TAG, e.getMessage());
+        }
+
+
+        dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item,list);
+        dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinnerCat.setAdapter(dataAdapter);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == CATEGORY_ADDED) {
+            if (resultCode == RESULT_OK) {
+
+                String newCategoryName = data.getStringExtra("newCategoryName");
+                setUpCategory();
+
+                // Select new Category in spinner
+                if (!newCategoryName.equals(null)) {
+                    setSelectedCategorySpinner(newCategoryName);
+                }
+
+                // Notify the change! (I think this is not necessary 'cause I've created the adapter)
+                dataAdapter.notifyDataSetChanged();
+            }
+        }
+
+    }
+
+    private void setSelectedCategorySpinner(String categoryName) {
+        int spinnerPosition = dataAdapter.getPosition(categoryName);
+        Spinner spinnerCat = (Spinner) findViewById(R.id.itemEditCategory);
+
+        spinnerCat.setSelection(spinnerPosition);
+    }
+
+
+    private Position getPositionValuesFromView() {
 
         // Getting references from view
         EditText title = (EditText) findViewById(R.id.itemEditTitle);
@@ -211,7 +360,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
 
 
         // Making new Position object
-        PositionEntity pos = new PositionEntity();
+        Position pos = new Position();
 
         // Title
         pos.setTitle(title.getText().toString());
@@ -236,7 +385,9 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         return pos;
     }
 
-    private void setViewValuesFromPosition(PositionEntity pos) {
+
+
+    private void setViewValuesFromPosition(Position pos) {
 
         //Getting references from view
         EditText title = (EditText) findViewById(R.id.itemEditTitle);
@@ -289,8 +440,12 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        PositionEntity pos = getPositionValuesFromView();
-
+        Position pos = getPositionValuesFromView();
+        try {
+            Category cat = getCategoryFromView();
+            outState.putParcelable(PositionManager.CATEGORY_KEY, cat);
+        }catch (SQLException e){
+        }
         outState.putParcelable(PositionManager.POSITION_KEY, pos);
         outState.putLong(ID_TO_UPDATE_KEY,idToUpdate);
 
@@ -302,6 +457,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         super.onRestoreInstanceState(savedInstanceState);
 
         posEdited = savedInstanceState.getParcelable(PositionManager.POSITION_KEY);
+        catEdited = savedInstanceState.getParcelable(PositionManager.CATEGORY_KEY);
     }
 
     private void setUpMapIfNeeded() {
@@ -350,7 +506,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         markerOptions.title(posEdited.getTitle());
 
         // Setting the marker Icon
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
         markerOptions.draggable(true);
 
         // Placing a marker on the touched position
@@ -374,31 +530,6 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         circleSensitivity = mMap.addCircle(circleOptions);
 
     }
-
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_update_position, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -441,7 +572,7 @@ public class UpdatePositionActivity extends ActionBarActivity implements SeekBar
         markerOptions.title(posEdited.getTitle());
 
         // Setting the marker Icon
-        markerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.marker_blue));
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
         markerOptions.draggable(true);
 
         // Placing a marker on the touched position

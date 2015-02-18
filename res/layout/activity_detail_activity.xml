@@ -28,6 +28,17 @@
         android:textStyle="bold"/>
 
     <TextView
+        android:id="@+id/itemCategory"
+        android:text="category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/itemTitle"
+        android:layout_toRightOf="@+id/itemStatus"
+        android:layout_toEndOf="@+id/itemStatus"
+        android:layout_marginLeft="5dp"
+        android:textStyle="bold"/>
+
+    <TextView
         android:id="@+id/itemDescription"
         android:text="desc"
         android:layout_width="match_parent"

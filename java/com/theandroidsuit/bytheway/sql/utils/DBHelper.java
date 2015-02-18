@@ -7,9 +7,10 @@ import com.j256.ormlite.android.apptools.OrmLiteSqliteOpenHelper;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.support.ConnectionSource;
 import com.j256.ormlite.table.TableUtils;
-import com.theandroidsuit.bytheway.sql.databaseTable.CategoryEntity;
-import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPositionEntity;
-import com.theandroidsuit.bytheway.sql.databaseTable.PositionEntity;
+import com.theandroidsuit.bytheway.geofence.PositionManager;
+import com.theandroidsuit.bytheway.sql.databaseTable.Category;
+import com.theandroidsuit.bytheway.sql.databaseTable.CategoryPosition;
+import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 
 import java.sql.SQLException;
 
@@ -18,12 +19,12 @@ import java.sql.SQLException;
  */
 public class DBHelper extends OrmLiteSqliteOpenHelper {
 
-    private static final String DATABASE_NAME = "btw_psitions.db";
+    private static final String DATABASE_NAME = "btw_1.db";
     private static final int DATABASE_VERSION = 1;
 
-    private Dao<PositionEntity, Integer> positionDao;
-    private Dao<CategoryEntity, Integer> categoryDao;
-    private Dao<CategoryPositionEntity, Integer> categoryPositionDao;
+    private Dao<Position, Integer> positionDao;
+    private Dao<Category, Integer> categoryDao;
+    private Dao<CategoryPosition, Integer> categoryPositionDao;
 
 
     public DBHelper(Context context) {
@@ -33,9 +34,17 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db, ConnectionSource connectionSource) {
         try {
-            TableUtils.createTable(connectionSource, PositionEntity.class);
-            TableUtils.createTable(connectionSource, CategoryEntity.class);
-            TableUtils.createTable(connectionSource, CategoryPositionEntity.class);
+            TableUtils.createTable(connectionSource, Position.class);
+            TableUtils.createTable(connectionSource, Category.class);
+            TableUtils.createTable(connectionSource, CategoryPosition.class);
+
+
+            // Create Default Category
+            Category cat = new Category();
+            cat.setId(Category.DEFAULT_CATEGORY_ID);
+            cat.setTitle(PositionManager.CATEGORY_DEFAULT);
+            cat.setStatus(PositionManager.STATUS_ACTIVATED);
+            getCategoryDao().create(cat);
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -47,24 +56,24 @@ public class DBHelper extends OrmLiteSqliteOpenHelper {
         onCreate(db, connectionSource);
     }
 
-    public Dao<PositionEntity, Integer> getPositionDao() throws SQLException {
+    public Dao<Position, Integer> getPositionDao() throws SQLException {
         if (positionDao == null) {
-            positionDao = getDao(PositionEntity.class);
+            positionDao = getDao(Position.class);
         }
         return positionDao;
     }
 
 
-    public Dao<CategoryEntity, Integer> getCategoryDao() throws SQLException {
+    public Dao<Category, Integer> getCategoryDao() throws SQLException {
         if (categoryDao == null) {
-            categoryDao = getDao(CategoryEntity.class);
+            categoryDao = getDao(Category.class);
         }
         return categoryDao;
     }
 
-    public Dao<CategoryPositionEntity, Integer> getCategoryPositionDao() throws SQLException {
+    public Dao<CategoryPosition, Integer> getCategoryPositionDao() throws SQLException {
         if (categoryPositionDao == null) {
-            categoryPositionDao = getDao(CategoryPositionEntity.class);
+            categoryPositionDao = getDao(CategoryPosition.class);
         }
         return categoryPositionDao;
     }

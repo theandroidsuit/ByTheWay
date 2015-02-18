@@ -13,11 +13,39 @@
         android:orientation="horizontal"
         android:weightSum="4">
 
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2">
+
+            <LinearLayout
+                android:id="@+id/layoutMap"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/map_shadow"
+                android:layout_above="@+id/itemEditSensitive" >
+                <fragment
+                    android:id="@+id/mapPosition"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:name="com.google.android.gms.maps.SupportMapFragment"/>
+            </LinearLayout>
+
+            <SeekBar
+                android:id="@+id/itemEditSensitive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:max="100"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentBottom="true"/>
+        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/layoutLeft"
-            android:layout_width="263dp"
-            android:layout_height="match_parent">
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="2">
             <Switch
                 android:id="@+id/itemEditStatus"
                 android:layout_width="wrap_content"
@@ -64,12 +92,36 @@
                     android:textSize="12dp"/>
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/layoutCategory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_below="@+id/layoutDesc">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Category"/>
+
+                <Spinner
+                    android:id="@+id/itemEditCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="12dp"
+                    android:layout_weight="5"/>
+
+                <ImageView
+                    android:id="@+id/addCategory"
+                    android:src="@drawable/add"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_below="@+id/layoutDesc"
+                android:layout_below="@+id/layoutCategory"
                 android:weightSum="10">
                 <EditText
                     android:id="@+id/itemEditAddress"
@@ -109,31 +161,5 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent">
-
-            <LinearLayout
-                android:id="@+id/layoutMap"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/map_shadow"
-                android:layout_above="@+id/itemEditSensitive" >
-                <fragment
-                    android:id="@+id/mapPosition"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:name="com.google.android.gms.maps.SupportMapFragment"/>
-            </LinearLayout>
-
-            <SeekBar
-                android:id="@+id/itemEditSensitive"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentBottom="true"/>
-            </RelativeLayout>
     </LinearLayout>
 </RelativeLayout>
