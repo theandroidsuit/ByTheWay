@@ -70,6 +70,7 @@ public class AddCategoryActivity extends Activity {
             EditText et = (EditText) findViewById(R.id.itemAddCategory);
             String title = et.getText().toString();
 
+            cat.setId(0l);
             cat.setTitle(title);
             cat.setStatus(PositionManager.STATUS_ACTIVATED);
 

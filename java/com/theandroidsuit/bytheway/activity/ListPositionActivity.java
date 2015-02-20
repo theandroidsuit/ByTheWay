@@ -102,7 +102,8 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 
         String option = (String) parent.getItemAtPosition(position);
-        if ("All Positions".equals(option)){
+
+        if ("All Locations".equals(option)){
             mode = PositionManager.LIST_MODE_TITLE;
             setListByMode(idsParam, startingFlow);
         }else if ("Ordered by Category".equals(option)){

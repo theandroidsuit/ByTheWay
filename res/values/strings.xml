@@ -9,7 +9,7 @@
     <!-- Messages -->
 
     <string name="not_connected">GoogleApiClient no yet connected. Try again.</string>
-    <string name="add_geofences_ok" translatable="false">Add positions success</string>
+    <string name="add_geofences_ok" translatable="false">Add locations success</string>
     <string name="add_geofences_result_success" translatable="false">Add Geofences: Success GeofenceRequestIds=%1$s</string>
     <string name="add_geofences_result_failure" translatable="false">Add Geofences: Failure, error code %1$d GeofenceRequestIds=%2$s</string>
     <string name="add_geofences_already_requested_error" translatable="false">Can\'t add geofences, previous request hasn\'t finished.</string>
@@ -22,7 +22,7 @@
     <string name="geofence_input_error_radius_invalid" translatable="false">Invalid radius(s). Must be 1 meter or greater.</string>
     <string name="geofence_transition_entered" translatable="false">Entered</string>
     <string name="geofence_transition_exited" translatable="false">Exited</string>
-    <string name="geofence_transition_notification_title" translatable="false"> %1$s positions(s) %2$s</string>
+    <string name="geofence_transition_notification_title" translatable="false"> %1$s location(s) %2$s</string>
     <string name="geofence_transition_notification_text" translatable="false">Touch the notification to go to By the Way</string>
     <string name="geofence_transition_error_detail" translatable="false">Geofence transition error, code: %1$d message: %2$s.</string>
     <string name="geofence_transition_invalid_type" translatable="false">Geofence transition error. Invalid type %1$d in geofences %2$s</string>
@@ -68,11 +68,11 @@
     <string name="connection_error_unknown" translatable="false">An unknown error occurred</string>
 
     <string name="title_activity_maps">By the Way</string>
-    <string name="title_activity_list_position">List positions</string>
-    <string name="title_activity_detail_activity">Position detail</string>
-    <string name="title_activity_add_current_position">Add current position</string>
-    <string name="title_activity_update_position">Update position</string>
-    <string name="title_activity_add_position_by_form">Add position by form</string>
+    <string name="title_activity_list_position">List locations</string>
+    <string name="title_activity_detail_activity">Location detail</string>
+    <string name="title_activity_add_current_position">Add current location</string>
+    <string name="title_activity_update_position">Update location</string>
+    <string name="title_activity_add_position_by_form">Add location by form</string>
     <string name="title_activity_add_category">Add category</string>
     <string name="title_activity_manage_category">Manage category</string>
     <string name="title_activity_update_category">Update category</string>
@@ -80,17 +80,17 @@
 
     <string name="notification_entered">BtW: Close to %1s</string>
 
-    <string name="action_all_positions">List all positions</string>
+    <string name="action_all_positions">List all locations</string>
     <string name="no_location_error">Error: No location finded</string>
-    <string name="action_add_position_by_form">Add position by form</string>
+    <string name="action_add_position_by_form">Add location by form</string>
     <string name="invalid_location">Invalid location, please, drag the marker to a proper location</string>
-    <string name="action_add_position_by_map">Add position by map</string>
+    <string name="action_add_position_by_map">Add location by map</string>
     <string name="permission_error">Invalid location permission. You need to use ACCESS_FINE_LOCATION with geofences</string>
     <string name="invalid_address">Invalid address</string>
     <string name="category_added">Category added</string>
 
     <string-array name="listMode">
-        <item>All Positions</item>
+        <item>All Locations</item>
         <item>Ordered by Category</item>
     </string-array>
 
