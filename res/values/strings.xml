@@ -77,8 +77,8 @@
     <string name="title_activity_manage_category">Manage category</string>
     <string name="title_activity_update_category">Update category</string>
 
-    <string name="title_activity_add_position_by_map">AddPositionByMap</string>
-    <string name="title_activity_choose_position_by_map">ChoosePositionByMap</string>
+
+    <string name="notification_entered">BtW: Close to %1s</string>
 
     <string name="action_all_positions">List all positions</string>
     <string name="no_location_error">Error: No location finded</string>

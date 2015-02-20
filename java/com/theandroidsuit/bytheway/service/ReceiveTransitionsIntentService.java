@@ -24,7 +24,6 @@ import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.theandroidsuit.bytheway.activity.DetailActivity;
 import com.theandroidsuit.bytheway.activity.ListPositionActivity;
-import com.theandroidsuit.bytheway.activity.MapsActivity;
 import com.theandroidsuit.bytheway.R;
 import com.theandroidsuit.bytheway.geofence.GeofenceUtils;
 import com.theandroidsuit.bytheway.geofence.LocationServiceErrorMessages;
@@ -172,11 +171,12 @@ public class ReceiveTransitionsIntentService extends IntentService {
         Intent notificationIntent = null;
 
         // Create an explicit content Intent that starts the main Activity
-        if (names.size() > 1){
-            String idsStr = listToString(ids);
+        if (ids.size() > 1){
+            //String idsStr = listToString(ids);
+            long [] idsArray = toLongArray(ids);
 
             notificationIntent = new Intent(getApplicationContext(), ListPositionActivity.class);
-            notificationIntent.putExtra(PositionManager.LIST_ID_POSITION_KEY, idsStr);
+            notificationIntent.putExtra(PositionManager.LIST_ID_POSITION_KEY, idsArray);
         }else{
             // Create an explicit content Intent that starts the main Activity
             notificationIntent = new Intent(getApplicationContext(), DetailActivity.class);
@@ -194,14 +194,15 @@ public class ReceiveTransitionsIntentService extends IntentService {
 
         // Get a PendingIntent containing the entire back stack
         PendingIntent notificationPendingIntent =
-                stackBuilder.getPendingIntent(0, Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_CANCEL_CURRENT);
 
         // Get a notification builder that's compatible with platform versions >= 4
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         // Set the notification contents
         builder.setSmallIcon(R.drawable.fav)
-               .setContentTitle(getString(R.string.geofence_transition_notification_title, transitionType, names))
+               //.setContentTitle(getString(R.string.geofence_transition_notification_title, transitionType, names))
+               .setContentTitle(getString(R.string.notification_entered, names))
                .setContentText(getString(R.string.geofence_transition_notification_text))
                .setContentIntent(notificationPendingIntent)
                .setAutoCancel(true);
@@ -214,10 +215,18 @@ public class ReceiveTransitionsIntentService extends IntentService {
         mNotificationManager.notify(0, builder.build());
     }
 
+    private long[] toLongArray(List<Long> ids) {
+        long [] idsArray = new long[ids.size()];
+        for(int i = 0; i < ids.size(); i++){
+            idsArray[i] = ids.get(i);
+        }
+        return idsArray;
+    }
+
     private String listToString(List<Long> ids) {
         StringBuffer sb = new StringBuffer();
         for(Long id: ids){
-            sb.append(id);
+            sb.append(id).append(PositionManager.ID_SEPARATOR);
         }
         return sb.toString();
     }

@@ -3,8 +3,6 @@ package com.theandroidsuit.bytheway.activity;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ExpandableListView;
@@ -15,7 +13,6 @@ import com.j256.ormlite.android.apptools.OpenHelperManager;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.theandroidsuit.bytheway.R;
-import com.theandroidsuit.bytheway.adapter.CategoryListAdapter;
 import com.theandroidsuit.bytheway.adapter.PositionByCategoryListAdapter;
 import com.theandroidsuit.bytheway.adapter.PositionListAdapter;
 import com.theandroidsuit.bytheway.geofence.PositionManager;
@@ -33,6 +30,9 @@ import java.util.List;
 
 public class ListPositionActivity extends ActionBarActivity implements Spinner.OnItemSelectedListener{
 
+    private static final String IDS_PARAMS_KEY = "ids_params_key";
+    private static final String STARTING_FLOW_KEY = "starting_flow_key";
+
     public final String TAG = this.getClass().getName();
     private DBHelper mDBHelper;
     private String mode;
@@ -44,7 +44,7 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
     private List<String> listHeaders;
     private HashMap<String, List<Position>> dataMap;
 
-    private static String idsStr;
+    private static long[] idsParam;
     private static String startingFlow;
 
     @Override
@@ -53,15 +53,36 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
         setContentView(R.layout.activity_list_position);
 
 
-        mode = getIntent().getStringExtra(PositionManager.LIST_MODE_KEY);
+        if (null == savedInstanceState) {
+            mode = getIntent().getStringExtra(PositionManager.LIST_MODE_KEY);
 
-        idsStr = getIntent().getStringExtra(PositionManager.LIST_ID_POSITION_KEY);
-        startingFlow = getIntent().getStringExtra(BTWUtils.STARTING_FLOW) == null ?
-                BTWUtils.LIST_POSITION_ACTIVITY : getIntent().getStringExtra(BTWUtils.STARTING_FLOW);
+            idsParam = getIntent().getLongArrayExtra(PositionManager.LIST_ID_POSITION_KEY);
+            getIntent().removeExtra(PositionManager.LIST_ID_POSITION_KEY);
+
+            startingFlow = getIntent().getStringExtra(BTWUtils.STARTING_FLOW) == null ?
+                    BTWUtils.LIST_POSITION_ACTIVITY : getIntent().getStringExtra(BTWUtils.STARTING_FLOW);
+        }
 
         // Setup the listener
         Spinner spinner = (Spinner) findViewById(R.id.modeList);
         spinner.setOnItemSelectedListener(this);
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putLongArray(IDS_PARAMS_KEY, idsParam);
+        outState.putString(STARTING_FLOW_KEY, startingFlow);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        idsParam = savedInstanceState.getLongArray(IDS_PARAMS_KEY);
+        startingFlow = savedInstanceState.getString(STARTING_FLOW_KEY);
     }
 
     @Override
@@ -83,7 +104,7 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
         String option = (String) parent.getItemAtPosition(position);
         if ("All Positions".equals(option)){
             mode = PositionManager.LIST_MODE_TITLE;
-            setListByMode(idsStr, startingFlow);
+            setListByMode(idsParam, startingFlow);
         }else if ("Ordered by Category".equals(option)){
             mode = PositionManager.LIST_MODE_CATEGORY;
             setListByMode(null, startingFlow);
@@ -112,15 +133,21 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
     /* BUSINESS METHODS                                       */
     /**********************************************************/
 
-    private void setListByMode(String idsStr, String startingFlow) {
+    private void setListByMode(long[] idsStr, String startingFlow) {
         try {
 
             if (null == mode || PositionManager.LIST_MODE_TITLE.equals(mode)) {
 
                 ListView listview = (ListView) findViewById(R.id.listview);
                 ExpandableListView listviewToHide = (ExpandableListView) findViewById(R.id.listviewExp);
+
                 listview.setVisibility(View.VISIBLE);
                 listviewToHide.setVisibility(View.INVISIBLE);
+
+                if (null != idsStr){
+                    Spinner spinner = (Spinner) findViewById(R.id.modeList);
+                    spinner.setVisibility(View.INVISIBLE);
+                }
 
                 if (null == adapter) {
                     positionList = getAllPositionsByTitle(idsStr);
@@ -180,15 +207,15 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
         return list;
     }
 
-    private List<Position> getAllPositionsByTitle(String idsStr) throws SQLException {
+    private List<Position> getAllPositionsByTitle(long[] idsParam) throws SQLException {
         List<Position> list = new ArrayList();
 
         Dao dao = getHelper().getPositionDao();
-        if (null != idsStr){
-            String[] ids = idsStr.split(PositionManager.ID_SEPARATOR);
+        if (null != idsParam){
+            //String[] ids = idsStr.split(PositionManager.ID_SEPARATOR);
 
-            for(int i = 0; i < ids.length; i++) {
-                Position pos = (Position) dao.queryForId(Long.valueOf(ids[i]));
+            for(int i = 0; i < idsParam.length; i++) {
+                Position pos = (Position) dao.queryForId(Long.valueOf(idsParam[i]));
                 list.add(pos);
             }
         }else{
@@ -221,7 +248,7 @@ public class ListPositionActivity extends ActionBarActivity implements Spinner.O
     public void notifyTheChange(){
         try {
             if (null == mode || PositionManager.LIST_MODE_TITLE.equals(mode)) {
-                positionList = getAllPositionsByTitle(idsStr);
+                positionList = getAllPositionsByTitle(idsParam);
 
                 adapter.updateAdapterData(positionList);
 

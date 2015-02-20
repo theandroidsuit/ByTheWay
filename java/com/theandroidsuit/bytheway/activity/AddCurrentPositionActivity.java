@@ -8,8 +8,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -41,12 +39,13 @@ import com.theandroidsuit.bytheway.sql.databaseTable.Position;
 import com.theandroidsuit.bytheway.sql.utils.DBHelper;
 import com.theandroidsuit.bytheway.util.BTWUtils;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class AddCurrentPositionActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener{
+public class AddCurrentPositionActivity extends ActionBarActivity implements SeekBar.OnSeekBarChangeListener,  GoogleMap.OnMarkerDragListener{
 
     public final String TAG = this.getClass().getName();
 
@@ -57,9 +56,10 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
     private static final int CATEGORY_ADDED = 1;
 
     private GoogleMap mMap;
-    private Circle circleSensitivity;
     private SeekBar sensitivity;
 
+    private static Circle circleSensitivity;
+    private static Marker marker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,7 +70,7 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
                 BTWUtils.ADD_POSITION_ACTIVITY : getIntent().getStringExtra(BTWUtils.STARTING_FLOW);
 
         setUpMapIfNeeded();
-        setUpSensitivity();
+        setUpListeners();
         setUpCategory();
 
         ImageView edit = (ImageView) findViewById(R.id.imageEdit);
@@ -112,8 +112,11 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
         });
     }
 
-    private void setUpSensitivity() {
+    private void setUpListeners() {
         // Setting the listener
+
+        mMap.setOnMarkerDragListener(this);
+
         sensitivity = (SeekBar) findViewById(R.id.itemEditSensitive);
         sensitivity.setOnSeekBarChangeListener(this);
         sensitivity.setProgress(40);
@@ -252,10 +255,17 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
 
     private Position getPositionValuesFromView() throws BTWOperationError {
         Position pos = new Position();
-        Location location = getCurrentLocation();
 
-        pos.setLatitude(location.getLatitude());
-        pos.setLongitude(location.getLongitude());
+        if (null != marker){
+            pos.setLatitude(marker.getPosition().latitude);
+            pos.setLongitude(marker.getPosition().longitude);
+        } else{
+            BTWOperationError error = new BTWOperationError();
+            error.setName("LocationError");
+            error.setDescription(getString(R.string.no_location_error));
+            throw error;
+        }
+
 
         EditText title = (EditText) findViewById(R.id.itemEditTitle);
         EditText description = (EditText) findViewById(R.id.itemEditDescription);
@@ -328,11 +338,13 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
         // This will be displayed on taping the marker
         //markerOptions.title(positionToShow.getTitle());
 
+        markerOptions.draggable(true);
+
         // Setting the marker Icon
         markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
 
         // Placing a marker on the touched position
-        Marker marker = mMap.addMarker(markerOptions);
+        marker = mMap.addMarker(markerOptions);
 
         // Showing the current location in Google Map
         CameraPosition cameraPosition = new CameraPosition.Builder().target(latLng).zoom(16.0f).build();
@@ -389,6 +401,48 @@ public class AddCurrentPositionActivity extends ActionBarActivity implements See
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
+
+    }
+
+    @Override
+    public void onMarkerDragStart(Marker marker) {
+        circleSensitivity.remove();
+    }
+
+    @Override
+    public void onMarkerDrag(Marker marker) {
+
+    }
+
+    @Override
+    public void onMarkerDragEnd(Marker newMarker) {
+        // Instantiates a new CircleOptions object and defines the center and radius
+
+        marker.remove();
+
+        // Creating a marker
+        MarkerOptions markerOptions = new MarkerOptions();
+
+        // Setting the position for the marker
+        markerOptions.position(newMarker.getPosition());
+
+        // Setting the marker Icon
+        markerOptions.icon(BitmapDescriptorFactory.fromResource(PositionManager.MARKER_IMAGE_RESOURCE));
+        markerOptions.draggable(true);
+
+        // Placing a marker on the touched position
+        marker = mMap.addMarker(markerOptions);
+
+        CircleOptions circleOptions = new CircleOptions()
+                .center(newMarker.getPosition())
+                .fillColor(Color.parseColor(PositionManager.SENSIVILITY_FILL_COLOR))
+                .strokeColor(Color.parseColor(PositionManager.SENSIVILITY_BORDER_COLOR))
+                .strokeWidth(1f)
+                .radius(sensitivity.getProgress()); // In meters
+
+        // Get back the mutable Circle
+        circleSensitivity.remove();
+        circleSensitivity = mMap.addCircle(circleOptions);
 
     }
 }
